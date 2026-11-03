@@ -3,11 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Bastión</title>
+<title>Bastión · Tower defense</title>
+<meta name="description" content="Defendé el núcleo, construí torres y sobreviví: campaña de 15 oleadas o modo infinito.">
+<meta name="theme-color" content="#11151c">
+<meta property="og:title" content="Bastión">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <style>
-  html,body{margin:0;height:100%;background:#11151c;overflow:hidden}
+  html,body{margin:0;height:100%;background:#11151c;overflow:hidden;overscroll-behavior:none;user-select:none}
   body{display:flex;align-items:center;justify-content:center}
-  canvas{width:100%;max-width:calc(100vh * 16 / 9);aspect-ratio:16/9;display:block}
+  canvas{width:100%;max-width:calc(100vh * 16 / 9);max-height:100vh;aspect-ratio:16/9;display:block;touch-action:none}
   #mute{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));right:8px;background:#11151c;color:#e8ecf1;
     border:2px solid #3a4558;font:14px Bahnschrift,"Arial Narrow",sans-serif;padding:6px 10px;cursor:pointer}
   #mute:focus-visible{outline:2px solid #f2c14e}
@@ -455,7 +459,7 @@ function buyTech(i){
  const t=TECHS[i];if(!t)return;const lv=S.techLevels[t.id]||0,cost=t.base+lv*35;
  if(S.carried<cost){float(S.hero.x,S.hero.y-25,'Falta chatarra');return;}
  S.carried-=cost;S.techLevels[t.id]=lv+1;
- if(t.id==='repair')S.hp=Math.min(20,S.hp+2);
+ if(t.id==='repair')S.hp=Math.min(S.coreMax||20,S.hp+2);
  float(S.hero.x,S.hero.y-25,t.name+' · Nv. '+(lv+1));sfx.build();
 }
 const SKINS=[
@@ -708,7 +712,7 @@ function renderTitle() {
   ctx.strokeStyle='#72c9d2';ctx.lineWidth=2;ctx.stroke();
   const pulseText=Math.floor(S.t*1.7)%2===0;
   text('PULSÁ ENTER PARA JUGAR',W/2,443,18,pulseText?'#eaffff':'#8fcbd2');
-  text('OLEADAS DE ENEMIGOS  ·  JEFES CADA 5  ·  5 MAPAS',W/2,493,12,C.dim,'center','normal');
+  text('OLEADAS DE ENEMIGOS  ·  5 MAPAS',W/2,493,12,C.dim,'center','normal');
   if(S.best)text('RÉCORD PERSONAL  ·  OLEADA '+S.best,W/2,518,12,'#f2c14e','center','normal');
 }
 
@@ -1060,6 +1064,8 @@ function renderOver() {
   });
 }
 
+addEventListener('blur',()=>{for(const k in keys)keys[k]=false;});
+document.addEventListener('visibilitychange',()=>{last=performance.now();for(const k in keys)keys[k]=false;});
 /* ============ 7. BUCLE PRINCIPAL ============ */
 let last = performance.now();
 function frame(now) {
@@ -1069,6 +1075,242 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
+
+/* Bastión · mods.js — menú nuevo, texturas, modo INFINITO. Cargar DESPUÉS del script principal. */
+S.mode = S.mode || 'campaign'; S.bestInf = 0;
+try { S.bestInf = +localStorage.getItem('bastion.bestInf') || 0; } catch (e) {}
+const BASE_SP = {}; for (const k in ENEMY) BASE_SP[k] = ENEMY[k].sp;
+
+/* ---------- MODO INFINITO ---------- */
+const _end = endWave;
+endWave = function () {
+  if (S.mode !== 'endless') return _end();
+  setBest(); S.phase = 'rest'; S.timer = 22; S.shopRerolls = 1; S.shopStockReady = false; stockShop(); openShop();
+  S.offer = CARDS.filter(c => !S.up[c[0]]).sort(() => Math.random() - .5).slice(0, 3);
+};
+const _sb = setBest;
+setBest = function () {
+  if (S.mode !== 'endless') return _sb();
+  if (S.wave > S.bestInf) { S.bestInf = S.wave; try { localStorage.setItem('bastion.bestInf', S.wave); } catch (e) {} }
+};
+const _mk = mk;
+mk = function (...a) {
+  _mk(...a);
+  if (S.mode === 'endless' && S.wave > 15) { const e = S.enemies[S.enemies.length - 1], f = Math.pow(1.07, S.wave - 15); e.hp *= f; e.maxHp *= f; }
+};
+const _nw = nextWave;
+nextWave = function () {
+  _nw();
+  const endless = S.mode === 'endless', k = endless ? Math.max(0, S.wave - 15) : 0;
+  for (const t in ENEMY) ENEMY[t].sp = BASE_SP[t] * (1 + Math.min(.5, k * .015));   // más rápidos con el tiempo
+  if (!endless) return;
+  S.toSpawn += Math.floor(S.wave * 2.5) + k * 4;                                      // más enemigos por oleada
+  S.timer = Math.min(S.timer, 80); S.gap = Math.max(.25, S.timer * .72 / (S.toSpawn / 2));
+  const sc = 1 + .08 * k; S.enemies.forEach(e => { if (e.boss && !e.sc) { e.sc = 1; e.hp *= sc; e.maxHp *= sc; } });
+};
+
+/* ---------- MENÚ PRINCIPAL ---------- */
+const _kp = onKeyPress;
+onKeyPress = function (c) {
+  if (S.screen === 'title') {
+    const m = ['ArrowLeft', 'ArrowUp', 'KeyA', 'Digit1'].includes(c) ? 'campaign' : ['ArrowRight', 'ArrowDown', 'KeyD', 'Digit2'].includes(c) ? 'endless' : null;
+    if (m) { if (S.mode !== m) sfx.move(); S.mode = m; return; }
+  }
+  _kp(c);
+};
+const modeRect = i => ({ x: W / 2 - 265 + i * 280, y: 408, w: 250, h: 66 });
+const modeAt = p => [0, 1].find(i => { const r = modeRect(i); return p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && p.y <= r.y + r.h; });
+cv.addEventListener('mousemove', e => { if (S.screen !== 'title') return; const i = modeAt(mousePos(e)); if (i !== undefined) { const m = i ? 'endless' : 'campaign'; if (S.mode !== m) { S.mode = m; sfx.move(); } } });
+cv.addEventListener('click', e => { if (S.screen !== 'title') return; const i = modeAt(mousePos(e)); if (i !== undefined) S.mode = i ? 'endless' : 'campaign'; }, true);
+
+const _rt = renderTitle;
+renderTitle = function () {
+  _rt();
+  const g = ctx.createLinearGradient(0, 300, 0, 350); g.addColorStop(0, 'rgba(11,18,26,0)'); g.addColorStop(1, '#0b121a');
+  ctx.fillStyle = g; ctx.fillRect(0, 300, W, 50); ctx.fillStyle = '#0b121a'; ctx.fillRect(0, 350, W, H - 350);
+  ctx.save(); ctx.shadowColor = '#4fd1e0'; ctx.shadowBlur = 24 + Math.sin(S.t * 2) * 8;
+  const tg = ctx.createLinearGradient(W / 2 - 150, 0, W / 2 + 150, 0); tg.addColorStop(0, '#e8ecf1'); tg.addColorStop(.5, '#8ee5e6'); tg.addColorStop(1, '#f2c14e');
+  text('BASTIÓN', W / 2, 368, 74, tg); ctx.restore();
+  text('DEFENSA · ESTRATEGIA · SUPERVIVENCIA', W / 2, 398, 12, '#d0a85c', 'center', 'normal');
+  [['CAMPAÑA', '15 oleadas', '#4fd1e0'], ['INFINITO  ∞', 'Sin final · cada vez más duro', '#ff6b5e']].forEach(([t, d, col], i) => {
+    const r = modeRect(i), sel = (S.mode === 'endless') === !!i;
+    ctx.save(); ctx.fillStyle = sel ? 'rgba(24,40,54,.96)' : 'rgba(14,22,31,.9)';
+    if (sel) { ctx.shadowColor = col; ctx.shadowBlur = 16 + Math.sin(S.t * 4) * 5; }
+    ctx.beginPath(); ctx.roundRect(r.x, r.y, r.w, r.h, 12); ctx.fill(); ctx.shadowBlur = 0;
+    ctx.strokeStyle = sel ? col : '#34465a'; ctx.lineWidth = sel ? 3 : 1.5; ctx.stroke(); ctx.restore();
+    text(t, r.x + r.w / 2, r.y + 26, 21, sel ? col : '#7f93a6'); text(d, r.x + r.w / 2, r.y + 49, 11, sel ? C.ink : '#6d7e8f', 'center', 'normal');
+  });
+  text(Math.floor(S.t * 1.7) % 2 ? 'ENTER · JUGAR' : 'ENTER · JUGAR  ▸', W / 2, 497, 15, '#eaffff');
+  const rec = S.mode === 'endless' ? 'RÉCORD INFINITO · OLEADA ' + S.bestInf : 'RÉCORD CAMPAÑA · OLEADA ' + S.best;
+  text('←/→ cambiar modo   ·   ' + rec, W / 2, 522, 11, '#f2c14e', 'center', 'normal');
+};
+
+/* ---------- TEXTURAS ---------- */
+const PALS = [['#111b24', '#1a2a38', '#2b4254', '#4a6a7c', '#c9962f'], ['#201a19', '#32241f', '#4d3226', '#9a5c3c', '#e07a3a'], ['#0f1b2a', '#162b40', '#1f4258', '#3f86a0', '#59d4e8']];
+const TEX = {};
+function makeTex(mi) {
+  const pal = PALS[mi % PALS.length], cs = document.createElement('canvas'); cs.width = cs.height = 256; const g = cs.getContext('2d');
+  let s = 1234 + mi * 77; const rnd = () => (s = s * 16807 % 2147483647) / 2147483647;
+  g.fillStyle = pal[0]; g.fillRect(0, 0, 256, 256);
+  for (let y = 0; y < 256; y += 64) for (let x = 0; x < 256; x += 64) {
+    const gr = g.createLinearGradient(x, y, x + 64, y + 64); gr.addColorStop(0, pal[1]); gr.addColorStop(1, pal[0]);
+    g.fillStyle = gr; g.fillRect(x + 1, y + 1, 62, 62);
+    g.fillStyle = 'rgba(255,255,255,.06)'; g.fillRect(x + 1, y + 1, 62, 2); g.fillRect(x + 1, y + 1, 2, 62);
+    g.fillStyle = 'rgba(0,0,0,.4)'; g.fillRect(x + 1, y + 61, 62, 2); g.fillRect(x + 61, y + 1, 2, 62);
+    g.fillStyle = pal[3]; g.globalAlpha = .6; for (const [a, b] of [[7, 7], [57, 7], [7, 57], [57, 57]]) { g.beginPath(); g.arc(x + a, y + b, 1.9, 0, 6.3); g.fill(); } g.globalAlpha = 1;
+    const r = rnd();
+    if (r < .3) { g.strokeStyle = 'rgba(0,0,0,.4)'; g.lineWidth = 2; for (let i = 0; i < 6; i++) { g.beginPath(); g.moveTo(x + 14, y + 15 + i * 6); g.lineTo(x + 50, y + 15 + i * 6); g.stroke(); } }
+    else if (r < .45) { g.fillStyle = 'rgba(0,0,0,.35)'; g.fillRect(x + 10, y + 26, 44, 12); g.fillStyle = pal[4]; g.globalAlpha = .7; for (let i = 0; i < 4; i++) g.fillRect(x + 13 + i * 10, y + 30, 6, 4); g.globalAlpha = 1; }
+    else if (r < .55) { g.strokeStyle = pal[4]; g.globalAlpha = .45; g.lineWidth = 6; g.setLineDash([6, 6]); g.beginPath(); g.moveTo(x + 4, y + 32); g.lineTo(x + 60, y + 32); g.stroke(); g.setLineDash([]); g.globalAlpha = 1; }
+  }
+  for (let i = 0; i < 7; i++) { const x = 30 + rnd() * 196, y = 30 + rnd() * 196, rr = 12 + rnd() * 18, gr = g.createRadialGradient(x, y, 1, x, y, rr);
+    gr.addColorStop(0, i % 2 ? 'rgba(120,60,20,.28)' : 'rgba(0,0,0,.3)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.beginPath(); g.arc(x, y, rr, 0, 6.3); g.fill(); }
+  g.strokeStyle = 'rgba(0,0,0,.45)'; g.lineWidth = 1; for (let i = 0; i < 6; i++) { let x = 20 + rnd() * 216, y = 20 + rnd() * 216; g.beginPath(); g.moveTo(x, y); for (let j = 0; j < 4; j++) g.lineTo(x += (rnd() - .5) * 26, y += (rnd() - .3) * 20); g.stroke(); }
+  for (let i = 0; i < 2200; i++) { g.fillStyle = rnd() < .5 ? 'rgba(255,255,255,.045)' : 'rgba(0,0,0,.14)'; g.fillRect(rnd() * 256, rnd() * 256, 1 + rnd() * 2, 1 + rnd() * 2); }
+  return ctx.createPattern(cs, 'repeat');
+}
+drawFloorTexture = function () {
+  const mi = S.mapIndex % PALS.length, pal = PALS[mi]; TEX[mi] = TEX[mi] || makeTex(mi);
+  ctx.fillStyle = TEX[mi]; ctx.fillRect(S.camera.x, S.camera.y, W, H);
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  for (const R of ROUTES) {   // bordillos con franjas de peligro (la calzada se dibuja encima)
+    const path = () => { ctx.beginPath(); R.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke(); };
+    ctx.setLineDash([12, 12]); ctx.strokeStyle = pal[4]; ctx.globalAlpha = .6; ctx.lineWidth = 58; path();
+    ctx.setLineDash([]); ctx.globalAlpha = 1; ctx.strokeStyle = '#141d27'; ctx.lineWidth = 49; path();
+  }
+  const gr = ctx.createRadialGradient(CORE.x, CORE.y, 10, CORE.x, CORE.y, 130); gr.addColorStop(0, 'rgba(79,209,224,.28)'); gr.addColorStop(1, 'rgba(79,209,224,0)');
+  ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(CORE.x, CORE.y, 130, 0, 6.3); ctx.fill();
+  ctx.strokeStyle = pal[3]; ctx.lineWidth = 2; ctx.setLineDash([6, 8]); for (const r of [62, 88]) { ctx.beginPath(); ctx.arc(CORE.x, CORE.y, r, S.t * .1, 6.3 + S.t * .1); ctx.stroke(); } ctx.setLineDash([]);
+  for (const R of ROUTES) {   // portales de aparición
+    const p = R[0], a = .25 + .15 * Math.sin(S.t * 3), sg = ctx.createRadialGradient(p[0], p[1], 4, p[0], p[1], 60);
+    sg.addColorStop(0, 'rgba(255,90,80,' + (a + .2) + ')'); sg.addColorStop(1, 'rgba(255,90,80,0)'); ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(p[0], p[1], 60, 0, 6.3); ctx.fill();
+  }
+};
+const _r = render;
+render = function () {
+  _r();
+  if (S.screen === 'play') {
+    const v = ctx.createRadialGradient(W / 2, H / 2, H * .4, W / 2, H / 2, H * 1.0); v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,.5)');
+    ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
+  }
+  if (S.mode !== 'endless') return;
+  if (S.screen === 'play') {
+    ctx.fillStyle = '#060d15'; ctx.fillRect(20, 40, 176, 22);
+    text('OLEADA ' + String(Math.max(1, S.wave)).padStart(2, '0') + '  ∞', 22, 51, 19, '#ff8b7d', 'left');
+  } else if (S.screen === 'over') {
+    ctx.fillStyle = C.bg; ctx.fillRect(250, 180, 460, 40); ctx.fillRect(250, 300, 460, 40);
+    text('Oleada alcanzada: ' + Math.max(1, S.wave) + '  ∞', W / 2, 200, 26, C.ink);
+    text('Récord infinito: oleada ' + S.bestInf, W / 2, 320, 18, C.dim, 'center', 'normal');
+  }
+};
+
+
+/* ===== mods2: mapas nuevos, menú renovado, combos, drops, onda, bonus ===== */
+PALS.push(['#141c1c','#1f2d2a','#334a44','#5e8a7c','#d08a3c'],['#16111f','#231a33','#37264f','#6d4fa0','#b28dff'],
+ ['#142231','#1d3347','#2f5470','#8cc4e0','#bfe9ff'],['#0f1a12','#17281a','#244a2a','#4f9a55','#9be564'],
+ ['#2a2115','#3d3020','#5c482c','#b8935a','#ffcf5c'],['#0e1020','#171a33','#262c58','#4b5bb5','#6fd0ff'],['#1c0f0d','#2d1713','#4a231a','#a8432a','#ff7a2e']);
+function genMap(name, cx, cy, seed) {
+  let s = seed; const r = () => (s = s * 16807 % 2147483647) / 2147483647, rr = (a, b) => a + r() * (b - a) | 0, routes = [];
+  [[0, -1], [1, 0], [0, 1], [-1, 0]].forEach(([dx, dy]) => {
+    const sx = dx ? (dx > 0 ? 2180 : 20) : rr(cx - 380, cx + 380), sy = dy ? (dy > 0 ? 1480 : 20) : rr(cy - 250, cy + 250), d1 = rr(200, 400), off = rr(-380, 380);
+    const pts = dy ? [[sx, sy], [sx, sy - dy * d1], [cx + off * .6, sy - dy * d1], [cx + off * .6, cy + dy * 170], [cx, cy]]
+                   : [[sx, sy], [sx - dx * d1, sy], [sx - dx * d1, cy + off * .4], [cx + dx * 170, cy + off * .4], [cx, cy]];
+    routes.push(pts.map(p => [Math.round(p[0]), Math.round(p[1])]));
+  });
+  return { name, core: { x: cx, y: cy }, routes, nodes: [] };
+}
+MAPS.push(genMap('Glaciar roto', 1090, 740, 11), genMap('Selva sintética', 1110, 760, 23), genMap('Desierto de cobre', 1080, 750, 37),
+          genMap('Estación orbital', 1100, 745, 41), genMap('Volcán dormido', 1120, 755, 59));
+Object.assign(S, { combo: 0, comboT: 0, drops: [], rapid: 0, novaCd: 0, hp0: 0 });
+const _sr = startRun; startRun = function () { _sr(); Object.assign(S, { combo: 0, comboT: 0, drops: [], rapid: 0, novaCd: 0 }); };
+const _mk2 = mk; mk = function (...a) { _mk2(...a); if (S.mapIndex > 4) { const e = S.enemies[S.enemies.length - 1], f = 1.48 / (1 + .12 * S.mapIndex); e.hp *= f; e.maxHp *= f; } };
+const _nw2 = nextWave; nextWave = function () { _nw2(); S.hp0 = S.hp; if (S.mapIndex > 4) S.toSpawn -= (S.mapIndex - 4) * 4; };
+const _e2 = endWave; endWave = function () {
+  if (S.wave > 0 && S.hp >= S.hp0) { const b = 20 + S.wave; S.carried += b; float(CORE.x, CORE.y - 60, '¡DEFENSA PERFECTA! +' + b); }
+  _e2();
+};
+const DROPS = [['heal', '#65d69a', '+'], ['rapid', '#f2c14e', '»'], ['nova', '#ff6b5e', '*'], ['magnet', '#80d9ee', 'o'], ['cash', '#ffd36b', '$']];
+const _die = die; die = function (e) {
+  _die(e); S.combo++; S.comboT = 2.5;
+  if (S.combo % 10 === 0) { S.carried += 5 + S.combo; float(e.x, e.y - 30, 'COMBO x' + S.combo + ' +' + (5 + S.combo)); }
+  if (e.boss || Math.random() < .07) { const d = DROPS[Math.random() * DROPS.length | 0]; S.drops.push({ x: e.x, y: e.y, k: d[0], c: d[1], s: d[2], t: 12 }); }
+};
+function doNova() { const h = S.hero; boom(h.x, h.y, 180, 4 + S.wave * .7, true); puff(h.x, h.y, 40, S.chosen.color, 280); sfx.build(); float(h.x, h.y - 30, '¡ONDA!'); }
+const _up = update; update = function (dt) {
+  if (S.screen === 'play' && !S.shopOpen && !S.techOpen && !S.customOpen) {
+    const h = S.hero; S.comboT -= dt; if (S.comboT <= 0) S.combo = 0; S.novaCd = Math.max(0, S.novaCd - dt);
+    if (S.rapid > 0) { S.rapid -= dt; S.shotCd -= dt; }
+    for (let i = S.drops.length - 1; i >= 0; i--) {
+      const d = S.drops[i]; if ((d.t -= dt) <= 0) { S.drops.splice(i, 1); continue; }
+      if (dist(d, h) < 26) {
+        S.drops.splice(i, 1); sfx.pick();
+        if (d.k === 'heal') { h.hp = Math.min(h.maxHp, h.hp + 30); float(h.x, h.y - 30, '+30 VIDA'); }
+        else if (d.k === 'rapid') { S.rapid = 8; float(h.x, h.y - 30, '¡DISPARO RÁPIDO!'); }
+        else if (d.k === 'nova') doNova();
+        else if (d.k === 'magnet') { S.scraps.forEach(s => { s.x = h.x; s.y = h.y; }); float(h.x, h.y - 30, '¡IMÁN!'); }
+        else { S.carried += 25; float(h.x, h.y - 30, '+25 plata'); }
+      }
+    }
+  }
+  _up(dt);
+};
+const _kp2 = onKeyPress; onKeyPress = function (c) {
+  if (S.screen === 'play' && c === 'KeyQ' && !S.shopOpen && !S.techOpen && !S.customOpen && S.novaCd <= 0) { S.novaCd = 14; doNova(); return; }
+  _kp2(c);
+};
+const _r3 = render; render = function () {
+  _r3(); if (S.screen !== 'play' || S.shopOpen || S.techOpen || S.customOpen) return;
+  for (const d of S.drops) {
+    if (d.t < 3 && Math.floor(S.t * 8) % 2) continue;
+    const x = d.x - S.camera.x, y = d.y - S.camera.y + Math.sin(S.t * 5 + d.x) * 3;
+    ctx.save(); ctx.shadowColor = d.c; ctx.shadowBlur = 14; ctx.fillStyle = '#0b121a'; ctx.beginPath(); ctx.arc(x, y, 12, 0, 6.3); ctx.fill();
+    ctx.strokeStyle = d.c; ctx.lineWidth = 2.5; ctx.stroke(); ctx.restore(); text(d.s, x, y + 1, 15, d.c);
+  }
+  if (S.combo >= 3) { text('COMBO x' + S.combo, W / 2, 190, 20 + Math.min(14, S.combo / 2), '#ffd36b'); ctx.fillStyle = '#ffd36b'; ctx.fillRect(W / 2 - 50, 208, 100 * Math.max(0, S.comboT / 2.5), 3); }
+  text(S.novaCd > 0 ? 'Q · ONDA ' + Math.ceil(S.novaCd) + 's' : 'Q · ONDA LISTA', W - 90, H - 16, 11, S.novaCd > 0 ? C.dim : '#ff8b7d');
+  if (S.rapid > 0) text('DISPARO RÁPIDO ' + Math.ceil(S.rapid) + 's', W - 90, H - 34, 11, '#f2c14e');
+};
+/* ---- menú principal renovado ---- */
+renderTitle = function () {
+  const cx = W / 2, cy = 168, t = S.t;
+  let g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#05080f'); g.addColorStop(.55, '#0c1925'); g.addColorStop(1, '#071018'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  g = ctx.createRadialGradient(cx, cy, 10, cx, cy, 320); g.addColorStop(0, 'rgba(79,209,224,.38)'); g.addColorStop(.5, 'rgba(242,193,78,.06)'); g.addColorStop(1, 'rgba(79,209,224,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  ctx.save(); ctx.beginPath(); ctx.rect(0, 290, W, H); ctx.clip(); ctx.strokeStyle = '#4fd1e0'; ctx.lineWidth = 1;
+  for (let i = -14; i <= 14; i++) { ctx.globalAlpha = .22; ctx.beginPath(); ctx.moveTo(cx + i * 16, 290); ctx.lineTo(cx + i * 110, H); ctx.stroke(); }
+  for (let k = 0; k < 10; k++) { const y = 290 + Math.pow((k + (t * .5 % 1)) / 10, 2) * 250; ctx.globalAlpha = .1 + k / 16; ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+  ctx.restore(); ctx.globalAlpha = 1; ctx.fillStyle = 'rgba(5,9,16,.5)'; ctx.fillRect(0, 330, W, 210);
+  for (let i = 0; i < 55; i++) {
+    const x = (i * 97 + Math.sin(t * .6 + i) * 30) % W, y = H - ((t * (18 + i % 5 * 9) + i * 53) % H);
+    ctx.globalAlpha = Math.min(.8, y / H) * .7; ctx.fillStyle = i % 3 ? '#6bd1e0' : '#f2c14e'; ctx.fillRect(x, y, 2 + i % 3, 2 + i % 3);
+  }
+  ctx.globalAlpha = 1;
+  ctx.save(); ctx.translate(cx, cy);
+  for (let k = 0; k < 3; k++) { ctx.save(); ctx.rotate(t * (k % 2 ? -.25 : .2) + k); ctx.strokeStyle = k === 1 ? 'rgba(242,193,78,.7)' : 'rgba(112,200,220,.45)'; ctx.lineWidth = k === 1 ? 2.5 : 1.5; ctx.setLineDash([22 - k * 5, 10 + k * 4]); ctx.beginPath(); ctx.arc(0, 0, 64 + k * 24, 0, 6.283); ctx.stroke(); ctx.restore(); }
+  ctx.setLineDash([]); const p = 1 + Math.sin(t * 2.5) * .07; ctx.scale(p, p);
+  ctx.shadowColor = '#4fd1e0'; ctx.shadowBlur = 34; ctx.fillStyle = '#16384a'; shapePath('hex', 0, 0, 34); ctx.fill(); ctx.shadowBlur = 0;
+  ctx.strokeStyle = '#9eeaf0'; ctx.lineWidth = 3; shapePath('hex', 0, 0, 27); ctx.stroke(); ctx.fillStyle = '#4fd1e0'; shapePath('hex', 0, 0, 16); ctx.fill(); ctx.fillStyle = '#eaffff'; ctx.beginPath(); ctx.arc(0, 0, 6, 0, 6.283); ctx.fill(); ctx.restore();
+  CHARS.forEach((ch, i) => { const a = t * .5 + i * Math.PI / 2, x = cx + Math.cos(a) * 128, y = cy + Math.sin(a) * 92;
+    ctx.save(); ctx.translate(x, y); ctx.rotate(a * 2); ctx.shadowColor = ch.color; ctx.shadowBlur = 18; ctx.fillStyle = ch.color; shapePath(ch.shape, 0, 0, 11); ctx.fill(); ctx.shadowBlur = 0; ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke(); ctx.restore(); });
+  ctx.save(); ctx.shadowColor = '#4fd1e0'; ctx.shadowBlur = 26 + Math.sin(t * 2) * 8;
+  const tg = ctx.createLinearGradient(cx - 170, 0, cx + 170, 0); tg.addColorStop(0, '#e8ecf1'); tg.addColorStop(.5, '#8ee5e6'); tg.addColorStop(1, '#f2c14e');
+  text('BASTIÓN', cx, 350, 72, tg); ctx.restore();
+  const ug = ctx.createLinearGradient(cx - 150, 0, cx + 150, 0); ug.addColorStop(0, 'rgba(242,193,78,0)'); ug.addColorStop(.5, '#f2c14e'); ug.addColorStop(1, 'rgba(242,193,78,0)'); ctx.fillStyle = ug; ctx.fillRect(cx - 150, 380, 300, 2);
+  text('DEFENSA · ESTRATEGIA · SUPERVIVENCIA', cx, 394, 11, '#d0a85c', 'center', 'normal');
+  [['CAMPAÑA', 'Resiste 15 oleadas y gana', '#4fd1e0'], ['INFINITO', 'Sin final · cada vez más difícil', '#ff6b5e']].forEach(([n, d, col], i) => {
+    const r = modeRect(i), sel = (S.mode === 'endless') === !!i;
+    ctx.save(); const bg = ctx.createLinearGradient(0, r.y, 0, r.y + r.h); bg.addColorStop(0, sel ? 'rgba(30,50,66,.97)' : 'rgba(16,24,34,.9)'); bg.addColorStop(1, sel ? 'rgba(16,28,40,.97)' : 'rgba(10,16,24,.9)'); ctx.fillStyle = bg;
+    if (sel) { ctx.shadowColor = col; ctx.shadowBlur = 18 + Math.sin(t * 4) * 6; }
+    ctx.beginPath(); ctx.roundRect(r.x, r.y, r.w, r.h, 14); ctx.fill(); ctx.shadowBlur = 0; ctx.strokeStyle = sel ? col : '#34465a'; ctx.lineWidth = sel ? 2.5 : 1.5; ctx.stroke();
+    ctx.translate(r.x + 30, r.y + 33); ctx.strokeStyle = sel ? col : '#5d7083'; ctx.fillStyle = sel ? col : '#5d7083'; ctx.lineWidth = 2.5;
+    if (i === 0) { ctx.beginPath(); ctx.moveTo(0, -14); ctx.lineTo(12, -8); ctx.lineTo(10, 7); ctx.lineTo(0, 15); ctx.lineTo(-10, 7); ctx.lineTo(-12, -8); ctx.closePath(); ctx.stroke(); ctx.globalAlpha = .35; ctx.fill(); }
+    else { ctx.beginPath(); for (let a = 0; a <= 6.3; a += .2) { const x = Math.cos(a) * 13 / (1 + Math.sin(a) ** 2), y = Math.sin(a) * Math.cos(a) * 13 / (1 + Math.sin(a) ** 2) * 1.6; a ? ctx.lineTo(x, y) : ctx.moveTo(x, y); } ctx.stroke(); }
+    ctx.restore();
+    text(n, r.x + 62, r.y + 26, 22, sel ? col : '#7f93a6', 'left'); text(d, r.x + 62, r.y + 49, 11, sel ? C.ink : '#6d7e8f', 'left', 'normal');
+  });
+  text(Math.floor(t * 1.7) % 2 ? 'ENTER · JUGAR' : 'ENTER · JUGAR  ▸', cx, 497, 15, '#eaffff');
+  text('←/→ cambiar modo   ·   RÉCORD ' + (S.mode === 'endless' ? 'INFINITO · OLEADA ' + S.bestInf : 'CAMPAÑA · OLEADA ' + S.best), cx, 522, 11, '#f2c14e', 'center', 'normal');
+};
+
 </script>
 </body>
 </html>
