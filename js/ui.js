@@ -1,6 +1,6 @@
 import { TOWERS } from './config.js';
 import { S } from './state.js';
-import { towerCost, upgradeSelectedTower, setFireMode } from './systems/combat.js';
+import { towerCost, blueprintCost, buyBlueprint, upgradeSelectedTower, setFireMode } from './systems/combat.js';
 import { startWave } from './systems/waves.js';
 import { objectiveStatus } from './systems/objectives.js';
 import { getChallenge } from './systems/campaign.js';
@@ -13,13 +13,25 @@ function percent(value, max) { return `${Math.max(0, Math.min(100, value / max *
 export function bindUI(callbacks = {}) {
   uiCallbacks = callbacks;
   const list = byId('tower-list');
-  list.innerHTML = Object.entries(TOWERS).map(([id, tower]) => `<button class="tower-option" data-tower="${id}" type="button"><span class="tower-icon" style="--tower-color:${tower.color}">${tower.icon}</span><span class="tower-name"><b>${tower.name}</b><small>${tower.role}</small></span><span class="tower-cost">${tower.cost} <small>◆</small></span></button>`).join('');
+  list.innerHTML = Object.entries(TOWERS).map(([id, tower]) => `<div class="tower-option" data-tower="${id}"><button class="tower-select" data-select-tower="${id}" type="button" aria-label="Elegir ${tower.name}"><span class="tower-icon" style="--tower-color:${tower.color}">${tower.icon}</span><span class="tower-name"><b>${tower.name}</b><small>${tower.role}</small></span><span class="tower-cost">${tower.cost} <small>◆</small></span></button><button class="blueprint-button" data-plan="${id}" type="button" title="Comprar plano por ${tower.planCost} de chatarra">⌑ PLANO · ${tower.planCost}</button></div>`).join('');
   list.addEventListener('click', event => {
-    const button = event.target.closest('[data-tower]'); if (!button) return;
-    S.buildType = button.dataset.tower; S.selectedTower = null; renderUI();
+    const planButton = event.target.closest('[data-plan]');
+    if (planButton) {
+      const result = buyBlueprint(planButton.dataset.plan);
+      if (!result.ok) S.banner = result.message;
+      callbacks.onBuild?.(result); renderUI(); return;
+    }
+    const button = event.target.closest('[data-select-tower]'); if (!button) return;
+    const type = button.dataset.selectTower;
+    if (!S.blueprints.has(type)) { S.buildType = null; S.selectedTower = null; S.banner = `COMPRÁ EL PLANO DE ${TOWERS[type].name.toUpperCase()} PARA CONSTRUIRLA`; renderUI(); return; }
+    S.buildType = type; S.selectedTower = null; renderUI();
   });
   byId('wave-button').addEventListener('click', startWave);
   byId('mode-button').addEventListener('click', () => { setFireMode(); renderUI(); });
+  byId('command-toggle').addEventListener('click', () => {
+    const panel = byId('command-panel'), open = !panel.classList.contains('open');
+    panel.classList.toggle('open', open); byId('command-toggle').setAttribute('aria-expanded', String(open));
+  });
   byId('back-button').addEventListener('click', () => { S.phase = 'menu'; byId('game-screen').hidden = true; byId('menu-screen').hidden = false; callbacks.onBack?.(); });
   byId('tower-info').addEventListener('click', event => {
     if (!event.target.closest('#upgrade-button')) return;
@@ -30,6 +42,7 @@ export function bindUI(callbacks = {}) {
 export function showGame() {
   byId('menu-screen').hidden = true; byId('result-screen').hidden = true; byId('game-screen').hidden = false;
   byId('hero2-hud').hidden = !S.coop; byId('coop-help').hidden = !S.coop;
+  byId('command-panel').classList.remove('open'); byId('command-toggle').setAttribute('aria-expanded', 'false');
 }
 
 export function renderUI() {
@@ -38,7 +51,7 @@ export function renderUI() {
   byId('wave-label').textContent = String(S.wave).padStart(2, '0');
   byId('kills-label').textContent = String(S.kills).padStart(3, '0');
   byId('credits-label').textContent = String(Math.floor(S.credits));
-  byId('challenge-label').textContent = getChallenge(S.challengeId)?.name || 'ESTÁNDAR';
+  byId('challenge-label').textContent = S.coop ? 'CO-OP LOCAL' : getChallenge(S.challengeId)?.name || 'FRONTERA';
   byId('core-bar').style.width = percent(S.coreHp, S.coreMax);
   byId('core-value').textContent = `${Math.max(0, Math.ceil(S.coreHp / S.coreMax * 100))}%`;
   byId('hero-bar').style.width = percent(S.hero.hp, S.hero.maxHp);
@@ -73,6 +86,11 @@ export function renderUI() {
     const type = button.dataset.tower;
     button.classList.toggle('active', S.buildType === type);
     button.querySelector('.tower-cost').innerHTML = `${towerCost(type)} <small>◆</small>`;
+    const plan = button.querySelector('.blueprint-button'), owned = S.blueprints.has(type), cost = blueprintCost(type);
+    plan.classList.toggle('blueprint-owned', owned);
+    plan.disabled = owned || S.credits < cost;
+    plan.textContent = owned ? 'PLANO LISTO' : `⌑ PLANO · ${cost}`;
+    plan.title = owned ? 'Plano comprado para esta partida' : `Comprar plano por ${cost} de chatarra`;
   });
   const selected = S.towers.find(t => t.id === S.selectedTower && !t.destroyed);
   const info = byId('tower-info');

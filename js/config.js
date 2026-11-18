@@ -3,29 +3,29 @@ export const VIEW = { width: 1280, height: 720 };
 export const CORE = { x: 1400, y: 950, radius: 64, maxHp: 1000 };
 
 export const HEROES = {
-  vanguard: { name: 'Vanguardia', hp: 190, speed: 250, damage: 28, range: 560, cooldown: .34, color: '#7fe4c0', passive: 'Más resistencia y daño estable.' },
-  ranger: { name: 'Explorador', hp: 145, speed: 305, damage: 23, range: 700, cooldown: .25, color: '#e4ce76', passive: 'Más alcance y cadencia.' },
-  engineer: { name: 'Ingeniera', hp: 160, speed: 255, damage: 25, range: 590, cooldown: .31, color: '#7dc6eb', passive: 'Repara lentamente el núcleo fuera de combate.' }
+  vanguard: { name: 'Vanguardia', hp: 190, speed: 250, damage: 28, range: 420, cooldown: .34, color: '#7fe4c0', passive: 'Más resistencia y daño estable.' },
+  ranger: { name: 'Explorador', hp: 145, speed: 305, damage: 23, range: 510, cooldown: .25, color: '#e4ce76', passive: 'Más movilidad y cadencia.' },
+  engineer: { name: 'Ingeniera', hp: 160, speed: 255, damage: 25, range: 440, cooldown: .31, color: '#7dc6eb', passive: 'Repara lentamente el núcleo fuera de combate.' }
 };
 
 export const TOWERS = {
-  ballista: { name: 'Ballesta', cost: 90, range: 390, rate: .86, damage: 62, energyUse: 1, color: '#e6bd70', role: 'Perforación', detail: 'Cada cuarto virote atraviesa enemigos y golpea con crítico.', icon: '⌁' },
-  mortar: { name: 'Mortero', cost: 125, range: 470, rate: 2.15, damage: 78, energyUse: 3.2, color: '#f18a65', role: 'Área', detail: 'Explosión de área que ralentiza a todos los alcanzados.', icon: '◉' },
-  cryo: { name: 'Emisor criónico', cost: 110, range: 340, rate: .22, damage: 11, energyUse: .42, color: '#71d6e8', role: 'Control', detail: 'Rayo continuo: ralentiza y expone al objetivo a más daño.', icon: '❄' },
-  totem: { name: 'Totem de pulso', cost: 145, range: 280, rate: 1.15, damage: 28, energyUse: 2, color: '#b796e8', role: 'Soporte', detail: 'Pulso de daño y reparación moderada a torres cercanas.', icon: '✣' },
-  inferno: { name: 'Lanzallamas', cost: 105, range: 190, rate: .14, damage: 9, energyUse: .34, color: '#fa775c', role: 'Combustión', detail: 'Cono de fuego: incendia grupos y mantiene daño con el tiempo.', icon: '♨' },
-  generator: { name: 'Generador', cost: 150, range: 150, rate: 0, damage: 0, energyUse: 0, output: 5.2, storage: 48, color: '#8bd6b0', role: 'Energía', detail: 'Aumenta la reserva máxima y genera energía para mantener activas las torretas.', icon: 'ϟ' }
+  ballista: { name: 'Ballesta', cost: 90, planCost: 55, range: 320, rate: .86, damage: 62, energyUse: 1, color: '#e6bd70', role: 'Perforación', detail: 'Cada cuarto virote atraviesa enemigos y golpea con crítico.', icon: '⌁' },
+  mortar: { name: 'Mortero', cost: 125, planCost: 85, range: 370, rate: 2.15, damage: 78, energyUse: 3.2, color: '#f18a65', role: 'Área', detail: 'Explosión de área que ralentiza a todos los alcanzados.', icon: '◉' },
+  cryo: { name: 'Emisor criónico', cost: 110, planCost: 70, range: 285, rate: .22, damage: 11, energyUse: .42, color: '#71d6e8', role: 'Control', detail: 'Rayo continuo: ralentiza y expone al objetivo a más daño.', icon: '❄' },
+  totem: { name: 'Totem de pulso', cost: 145, planCost: 90, range: 230, rate: 1.15, damage: 28, energyUse: 2, color: '#b796e8', role: 'Soporte', detail: 'Pulso de daño y reparación moderada a torres cercanas.', icon: '✣' },
+  inferno: { name: 'Lanzallamas', cost: 105, planCost: 75, range: 160, rate: .14, damage: 9, energyUse: .34, color: '#fa775c', role: 'Combustión', detail: 'Cono de fuego: incendia grupos y mantiene daño con el tiempo.', icon: '♨' },
+  generator: { name: 'Generador', cost: 150, planCost: 80, range: 125, rate: 0, damage: 0, energyUse: 0, output: 5.2, storage: 48, color: '#8bd6b0', role: 'Energía', detail: 'Aumenta la reserva máxima y genera energía para mantener activas las torretas.', icon: 'ϟ' }
 };
 
 export const RELICS = {
-  stormglass: { name: 'Vidrio de tormenta', description: '+18% daño del operador. Las tormentas duran más.', mods: { heroDamage: 1.18, stormDuration: 1.25 } },
-  salvager: { name: 'Insignia del chatarrero', description: '+30% chatarra por baja. Las torretas cuestan +18%.', mods: { killCredits: 1.3, towerCost: 1.18 } },
-  capacitor: { name: 'Capacitor inestable', description: '+45% generación. Las torretas consumen +22% energía.', mods: { generatorOutput: 1.45, energyUse: 1.22 } },
-  bulwark: { name: 'Semilla del bastión', description: '+24% vida del núcleo. Empezás con 28% menos chatarra.', mods: { coreHp: 1.24, startingCredits: .72 } },
-  ricochet: { name: 'Esquirla de rebote', description: 'En manual, los disparos saltan a 2 blancos cercanos. El operador tiene 14% menos vida.', mods: { manualBounces: 2, heroHp: .86 } },
-  dronecore: { name: 'Núcleo de escolta', description: 'Cada 9 bajas despliega un dron armado por 12 segundos. Empezás con 22% menos chatarra.', mods: { droneKills: 9, startingCredits: .78 } },
-  plasma: { name: 'Bucle de plasma', description: 'Los impactos de ballesta y mortero encadenan 38% de daño a otro enemigo. Consumen 30% más energía.', mods: { chainRatio: .38, energyUse: 1.3 } },
-  symbiosis: { name: 'Simbionte tóxico', description: 'Las nubes curan al operador y dañan más a los enemigos. Las torretas cuestan 20% más.', mods: { toxicAffinity: 1, towerCost: 1.2 } }
+  stormglass: { name: 'Vidrio de tormenta', icon: 'storm', unlock: 'Superá la oleada 2 en cualquier sector.', description: '+18% daño del operador. Las tormentas duran más.', mods: { heroDamage: 1.18, stormDuration: 1.25 } },
+  salvager: { name: 'Insignia del chatarrero', icon: 'salvage', unlock: 'Eliminá 35 enemigos en una partida.', description: '+30% chatarra por baja. Las torretas cuestan +18%.', mods: { killCredits: 1.3, towerCost: 1.18 } },
+  capacitor: { name: 'Capacitor inestable', icon: 'capacitor', unlock: 'Construí 2 generadores y superá la oleada 3.', description: '+45% generación. Las torretas consumen +22% energía.', mods: { generatorOutput: 1.45, energyUse: 1.22 } },
+  bulwark: { name: 'Semilla del bastión', icon: 'bulwark', unlock: 'Alcanzá la oleada 6.', description: '+24% vida del núcleo. Empezás con 28% menos chatarra.', mods: { coreHp: 1.24, startingCredits: .72 } },
+  ricochet: { name: 'Esquirla de rebote', icon: 'ricochet', unlock: 'Eliminá 15 enemigos con disparo manual.', description: 'En manual, los disparos saltan a 2 blancos cercanos. El operador tiene 14% menos vida.', mods: { manualBounces: 2, heroHp: .86 } },
+  dronecore: { name: 'Núcleo de escolta', icon: 'drone', unlock: 'Derrotá un jefe.', description: 'Cada 9 bajas despliega un dron armado por 12 segundos. Empezás con 22% menos chatarra.', mods: { droneKills: 9, startingCredits: .78 } },
+  plasma: { name: 'Bucle de plasma', icon: 'plasma', unlock: 'Construí 8 estructuras en una partida.', description: 'Los impactos de ballesta y mortero encadenan 38% de daño a otro enemigo. Consumen 30% más energía.', mods: { chainRatio: .38, energyUse: 1.3 } },
+  symbiosis: { name: 'Simbionte tóxico', icon: 'symbiosis', unlock: 'Completá un objetivo secundario.', description: 'Las nubes curan al operador y dañan más a los enemigos. Las torretas cuestan 20% más.', mods: { toxicAffinity: 1, towerCost: 1.2 } }
 };
 
 export const ENEMIES = {
