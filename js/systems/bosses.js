@@ -3,6 +3,7 @@ import { S } from '../state.js';
 import { makeBossRoutes } from '../maps.js';
 import { spawnEnemy } from './enemies.js';
 import { clamp, dist, nearest, rand } from '../utils.js';
+import { cue } from '../audio.js';
 
 export function bossForWave(wave) {
   if (wave % 5 !== 0) return null;
@@ -51,6 +52,7 @@ export function spawnBoss(kind) {
   const hp = cfg.baseHp * (1 + S.wave * .17 + towers * .15) * (S.coop ? 1.22 : 1) * (challenge.bossHp || 1);
   const boss = spawnEnemy('boss', null, { ...cfg, hp, bossKind: kind, color: cfg.color, radius: cfg.radius, speed: cfg.speed, damage: cfg.damage * (1 + S.wave * .075 + towers * .055) * (S.coop ? 1.12 : 1) * (challenge.bossDamage || 1), reward: cfg.reward + S.wave * 18 });
   if (!boss) return;
+  cue('boss');
   boss.maxHp = boss.hp = hp; boss.bossKind = kind; boss.phase = 1; boss.attackClock = 4; boss.specialClock = 5;
   boss.routeAt = 0; S.bossSpawned = true;
   inspectBossCounters(boss, true);

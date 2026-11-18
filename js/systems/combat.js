@@ -4,6 +4,7 @@ import { clamp, dist, dist2, nearest, pointOnRoutes } from '../utils.js';
 import { killEnemy } from './enemies.js';
 import { consumeEnergy, updatePower } from './power.js';
 import { deflectShot, stormImpactOffset } from './worldEvents.js';
+import { cue } from '../audio.js';
 
 const liveEnemies = () => S.enemies.filter(e => !e.dead && e.hp > 0);
 
@@ -11,9 +12,25 @@ export function towerCost(type) {
   return Math.round(TOWERS[type].cost * (1 + S.towers.filter(t => !t.destroyed).length * .10) * (S.relicMods.towerCost || 1));
 }
 
+export function blueprintCost(type) {
+  return Math.round((TOWERS[type]?.planCost || 0) * (S.relicMods.towerCost || 1));
+}
+
+export function buyBlueprint(type) {
+  const cfg = TOWERS[type];
+  if (!cfg || S.phase !== 'playing') return { ok: false, message: 'Plano no disponible.' };
+  if (S.blueprints.has(type)) return { ok: true, alreadyOwned: true };
+  const cost = blueprintCost(type);
+  if (S.credits < cost) return { ok: false, message: `Plano: faltan ${cost - Math.floor(S.credits)} de chatarra.` };
+  S.credits -= cost; S.blueprints.add(type); S.buildType = type; S.selectedTower = null;
+  cue('plan');
+  return { ok: true, type };
+}
+
 export function placeTower(type, x, y) {
   const cfg = TOWERS[type];
   if (!cfg || S.phase !== 'playing') return { ok: false, message: 'Selección inválida.' };
+  if (!S.blueprints.has(type)) return { ok: false, message: 'Primero comprá el plano de esta estructura.' };
   const cost = towerCost(type);
   if (S.credits < cost) return { ok: false, message: 'Falta chatarra.' };
   if (x < 85 || x > WORLD.width - 85 || y < 85 || y > WORLD.height - 85) return { ok: false, message: 'Fuera del sector.' };
@@ -24,6 +41,9 @@ export function placeTower(type, x, y) {
   S.credits -= cost;
   const tower = { id: ++S.id, type, x, y, level: 1, hp: 560, maxHp: 560, clock: .3, pulseClock: 1, shots: 0, disabled: 0, hitFlash: 0, anim: Math.random() * 8, angle: -Math.PI / 2, selected: false };
   S.towers.push(tower); S.selectedTower = tower.id;
+  S.runStats.towersBuilt++;
+  if (type === 'generator') S.runStats.generatorsBuilt++;
+  cue('build');
   return { ok: true, tower };
 }
 
@@ -65,6 +85,7 @@ function heroShootFor(hero, pointer, dt) {
     if (target && hero.fireClock <= 0) {
       hero.aim = Math.atan2(target.y - hero.y, target.x - hero.x);
       spawnPlayerShot(hero.x, hero.y, target.x, target.y, hero.damage, hero.color, { target, source: 'hero', speed: 850, radius: 5 });
+      cue('shot');
       hero.fireClock = hero.cooldown;
     }
   } else if (pointer.down && hero.fireClock <= 0) {
@@ -72,6 +93,7 @@ function heroShootFor(hero, pointer, dt) {
     const a = Math.atan2(ty - hero.y, tx - hero.x); hero.aim = a;
     const endX = hero.x + Math.cos(a) * hero.range, endY = hero.y + Math.sin(a) * hero.range;
     spawnPlayerShot(hero.x, hero.y, endX, endY, hero.damage * 1.12, hero.color, { source: 'manual', speed: 1100, radius: 4, life: hero.range / 1100, bounces: S.relicMods.manualBounces || 0 });
+    cue('shot');
     hero.fireClock = hero.cooldown * .72;
   }
 }
@@ -79,11 +101,13 @@ function heroShootFor(hero, pointer, dt) {
 function towerFire(tower, dt) {
   const cfg = TOWERS[tower.type], levelScale = tower.damageMultiplier || 1;
   tower.clock -= dt; tower.pulseClock -= dt; tower.disabled = Math.max(0, (tower.disabled || 0) - dt);
+  tower.fireFlash = Math.max(0, (tower.fireFlash || 0) - dt);
   tower.hitFlash = Math.max(0, tower.hitFlash - dt); tower.anim += dt;
   if (tower.type === 'generator') { tower.clock = .45; return; }
   if (tower.disabled || tower.clock > 0) return;
   const range = cfg.range * (tower.rangeMultiplier || 1);
   const target = nearest(liveEnemies(), tower, range, (enemy, d2) => d2 / (enemy.boss ? .72 : 1));
+  if (target) tower.fireFlash = .11;
   if (tower.type === 'totem') {
     if (tower.pulseClock <= 0) {
       if (!consumeEnergy(cfg.energyUse)) { tower.clock = .2; return; }
@@ -120,10 +144,12 @@ function towerFire(tower, dt) {
     tower.shots++;
     const crit = tower.shots % 4 === 0;
     spawnPlayerShot(tower.x, tower.y, target.x, target.y, cfg.damage * levelScale * (crit ? 1.75 : 1), cfg.color, { target, source: 'ballista', speed: 680, radius: crit ? 9 : 6, pierce: crit ? 3 : 0 });
+    cue('shot');
   } else if (tower.type === 'mortar') {
     if (!consumeEnergy(cfg.energyUse)) { tower.clock = .2; return; }
     S.shots.push({ x: tower.x, y: tower.y, targetX: target.x, targetY: target.y, travel: Math.max(.35, dist(target, tower) / 460), age: 0,
       damage: cfg.damage * levelScale, splash: 112 + tower.level * 18, slow: 1.6, color: cfg.color, radius: 9, source: 'mortar', arc: true, hits: new Set(), chained: false });
+    cue('shot');
   }
   tower.clock = Math.max(.22, cfg.rate * (1 - (tower.level - 1) * .08));
 }
@@ -146,6 +172,8 @@ function resolveShot(shot, target) {
   if (!target || target.dead) return false;
   const scale = target.expose > 0 ? 1.34 : 1;
   target.hp -= adaptedDamage(target, shot.damage * scale, shot.source);
+  if (shot.source === 'manual') target.manualHit = true;
+  cue('hit');
   target.hitFlash = .13;
   if (shot.slow) target.slow = Math.max(target.slow, shot.slow);
   if (shot.expose) target.expose = Math.max(target.expose, shot.expose);

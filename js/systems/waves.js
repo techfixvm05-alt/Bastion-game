@@ -3,10 +3,12 @@ import { S } from '../state.js';
 import { spawnEnemy } from './enemies.js';
 import { bossForWave, spawnBoss } from './bosses.js';
 import { choose, rand } from '../utils.js';
+import { cue } from '../audio.js';
 
 export function startWave() {
   if (S.phase !== 'playing' || S.waveActive) return;
   S.wave++; S.waveActive = true; S.restClock = 0; S.bossSpawned = false;
+  cue('wave');
   const boss = bossForWave(S.wave);
   const count = Math.min(82, Math.ceil((5 + S.wave * 2 + Math.floor(S.towers.length * 1.15) + (S.coop ? 4 : 0)) * (S.challenge?.mods?.waveCount || 1)));
   const pool = ['swarm'];

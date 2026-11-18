@@ -14,12 +14,13 @@ function normalizeRecord(row) {
   const heroType = Object.hasOwn(HEROES, row.heroType) ? row.heroType : 'vanguard';
   const hero2Type = Object.hasOwn(HEROES, row.hero2Type) ? row.hero2Type : 'ranger';
   const challengeId = row.challengeId && getChallenge(row.challengeId) ? row.challengeId : 'none';
+  const modeId = ['solo', 'coop', 'daily'].includes(row.modeId) ? row.modeId : row.coop ? 'coop' : challengeId !== 'none' ? 'daily' : 'solo';
   const dateText = String(row.date || '');
   return {
-    mapIndex: Number(row.mapIndex), heroType, hero2Type, coop: !!row.coop,
+    mapIndex: Number(row.mapIndex), modeId, heroType, hero2Type, coop: !!row.coop,
     wave: Math.max(0, Math.min(9999, Math.floor(Number(row.wave) || 0))),
     kills: Math.max(0, Math.min(999999, Math.floor(Number(row.kills) || 0))),
-    relic: Object.hasOwn(RELICS, row.relic) ? row.relic : 'stormglass',
+    relic: row.relic === 'none' ? 'none' : Object.hasOwn(RELICS, row.relic) ? row.relic : 'none',
     challengeId, seedText: normalizeSeed(row.seedText),
     seconds: Math.max(0, Math.min(999999, Math.floor(Number(row.seconds) || 0))),
     date: /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateText) ? dateText : 'Importado',
@@ -29,8 +30,10 @@ function normalizeRecord(row) {
 
 export function saveCurrentRecord() {
   const run = {
-    mapIndex: S.mapIndex, mapName: S.map.name, heroType: S.heroType, hero2Type: S.hero2Type, coop: S.coop,
+    mapIndex: S.mapIndex, mapName: S.map.name, modeId: S.modeId, heroType: S.heroType, hero2Type: S.hero2Type, coop: S.coop,
     wave: S.wave, kills: S.kills, relic: S.relicId, challengeId: S.challengeId, seedText: S.seedText,
+    towersBuilt: S.runStats.towersBuilt, generatorsBuilt: S.runStats.generatorsBuilt,
+    manualKills: S.runStats.manualKills, bossKills: S.runStats.bossKills,
     objectiveComplete: !!S.objective?.complete,
     seconds: Math.max(0, Math.round((performance.now() - S.runStart) / 1000)),
     date: new Date().toLocaleDateString('es-AR')
@@ -41,7 +44,7 @@ export function saveCurrentRecord() {
   return run;
 }
 
-function recordKey(record) { return [record.mapIndex, record.heroType, record.hero2Type, record.coop, record.wave, record.kills, record.seconds, record.seedText, record.challengeId].join('|'); }
+function recordKey(record) { return [record.mapIndex, record.modeId, record.heroType, record.hero2Type, record.coop, record.wave, record.kills, record.seconds, record.seedText, record.challengeId].join('|'); }
 
 function mergeRecords(records) {
   const unique = new Map();
@@ -58,7 +61,7 @@ export function importRecordsText(text) {
   const parsed = JSON.parse(text);
   const incoming = Array.isArray(parsed) ? parsed : parsed?.app === 'Bastion' && Array.isArray(parsed.records) ? parsed.records : null;
   if (!incoming) throw new Error('No reconozco este archivo de récords de Bastión.');
-  for (const row of incoming) { const record = normalizeRecord(row); if (record) recordCampaignProgress(record); }
+  // Imported records are shareable history; only a completed local run unlocks campaign content.
   const records = mergeRecords([...readRecords(), ...incoming]);
   try { localStorage.setItem(KEY, JSON.stringify(records)); } catch { throw new Error('El navegador no permite guardar los récords importados.'); }
   return records.length;

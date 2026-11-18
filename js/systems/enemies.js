@@ -1,6 +1,7 @@
 import { ENEMIES, CORE, TOWERS, WORLD } from '../config.js';
 import { S, finishRun } from '../state.js';
 import { clamp, dist, nearest, rand } from '../utils.js';
+import { cue } from '../audio.js';
 
 function sampleRoute(route) {
   const samples = [];
@@ -92,6 +93,8 @@ export function spawnEnemy(type, routeIndex = null, bossData = null) {
 export function killEnemy(enemy) {
   if (enemy.dead) return;
   enemy.dead = true; S.kills++; S.credits += enemy.reward * (S.relicMods.killCredits || 1) * (S.challenge?.mods?.rewardCredits || 1);
+  if (enemy.manualHit) S.runStats.manualKills++;
+  if (enemy.boss) S.runStats.bossKills++;
   S.effects.push({ type: 'burst', x: enemy.x, y: enemy.y, age: 0, life: .48, color: enemy.color, radius: enemy.radius * 1.5 });
   if (S.relicMods.droneKills) {
     S.relicKills++;
@@ -176,6 +179,7 @@ export function updateEnemies(dt) {
     if (d < shot.speed * dt + (target.radius || 14)) {
       if (target === S.hero) target.hp -= shot.damage;
       else target.hp -= shot.damage;
+      cue('hit');
       shot.dead = true;
     }
     if (shot.age > shot.life || shot.x < 0 || shot.x > WORLD.width || shot.y < 0 || shot.y > WORLD.height) shot.dead = true;
