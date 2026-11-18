@@ -12,50 +12,45 @@
   <body>
     <main id="app">
       <section id="menu-screen" class="screen menu-screen">
-        <div class="menu-backdrop"></div>
-        <header class="brand"><div class="brand-mark">B</div><div><span class="eyebrow">PROTOCOLO DE FRONTERA</span><h1>BASTIÓN</h1></div></header>
-        <div class="menu-layout">
-          <div class="menu-copy">
-            <p class="eyebrow">DEFENSA TÁCTICA · SUPERVIVENCIA</p>
-            <h2>La frontera<br /><em>no va a resistir sola.</em></h2>
-            <p class="intro">Construí una defensa, protegé el núcleo y adaptate. Cada torreta que te fortalece también vuelve más peligrosos a los jefes.</p>
-            <div class="menu-controls"><span><kbd>W A S D</kbd> mover</span><span><kbd>F</kbd> alternar disparo</span><span><kbd>ESPACIO</kbd> iniciar oleada</span></div>
-          </div>
-          <div class="launch-panel">
-            <div class="panel-top"><span class="eyebrow">CONFIGURACIÓN DE MISIÓN</span><span class="live-dot">SISTEMA LISTO</span></div>
-            <label class="field-label" for="map-select">Sector de combate</label>
-            <select id="map-select" class="select-control">
-              <option value="0">Las Tierras Rojas</option><option value="1">Cantera de Ceniza</option><option value="2">Delta Fracturado</option>
-            </select>
-            <label class="field-label" for="seed-input">Semilla de sector · pegá o compartí un código</label>
-            <div class="seed-controls"><input id="seed-input" class="text-control" type="text" maxlength="40" placeholder="BASTION:0:SEMILLA" /><button id="copy-seed" class="utility-button" type="button">COPIAR CÓDIGO</button></div>
-            <p id="seed-status" class="microcopy seed-status">La misma semilla genera el mismo terreno.</p>
-            <label class="field-label" for="hero-select">Operador</label>
-            <select id="hero-select" class="select-control">
-              <option value="vanguard">Vanguardia · resistente</option><option value="ranger">Explorador · móvil</option><option value="engineer">Ingeniera · reparaciones</option>
-            </select>
-            <label class="field-label" for="relic-select">Reliquia · elegís una por partida</label>
-            <select id="relic-select" class="select-control">
-              <option value="stormglass">Vidrio de tormenta</option><option value="salvager">Insignia del chatarrero</option><option value="capacitor">Capacitor inestable</option><option value="bulwark">Semilla del bastión</option><option value="ricochet">Esquirla de rebote</option><option value="dronecore">Núcleo de escolta</option><option value="plasma">Bucle de plasma</option><option value="symbiosis">Simbionte tóxico</option>
-            </select>
-            <p id="relic-description" class="relic-description">+18% daño del operador. Las tormentas duran más.</p>
-            <label class="coop-toggle"><input id="coop-toggle" type="checkbox" /><span><b>COOPERATIVO LOCAL</b><small>Dos operadores en el mismo campo</small></span></label>
-            <div id="coop-config" class="coop-config" hidden>
-              <label class="field-label" for="hero2-select">Segundo operador</label>
-              <select id="hero2-select" class="select-control"><option value="ranger">Explorador · móvil</option><option value="vanguard">Vanguardia · resistente</option><option value="engineer">Ingeniera · reparaciones</option></select>
-              <small>Jugador 2: flechas + click derecho para disparo manual.</small>
-            </div>
-            <label class="challenge-toggle"><input id="challenge-toggle" type="checkbox" /><span><b>DESAFÍO ROTATIVO</b><small id="daily-challenge-title">—</small></span></label>
-            <div class="challenge-card"><p id="daily-challenge-rule">Las reglas cambian cada día.</p></div>
-            <div class="mission-stats"><div><b>01</b><span>núcleo</span></div><div><b>∞</b><span>oleadas</span></div><div><b>3</b><span>jefes únicos</span></div></div>
-            <button id="start-button" class="primary-button">INICIAR DEFENSA <span>↗</span></button>
-            <p class="microcopy">No hay pausa entre oleadas. El descanso dura poco: aprovechalo.</p>
-            <div class="records-block"><div class="records-heading"><span class="eyebrow">RÉCORDS LOCALES</span><span id="unlock-summary">SECTORES 1/3</span></div><div id="record-list" class="record-list"></div><div class="transfer-controls"><textarea id="records-transfer" rows="2" placeholder="Exportá o pegá aquí datos de récords"></textarea><div><button id="export-records" class="utility-button" type="button">EXPORTAR</button><button id="import-records" class="utility-button" type="button">IMPORTAR</button></div><small id="transfer-status">Los récords se guardan en este navegador.</small></div></div>
+        <div class="menu-backdrop" aria-hidden="true"><i></i><i></i><i></i></div>
+        <header class="menu-header">
+          <div class="brand"><div class="brand-mark">B</div><div><span class="eyebrow">PROTOCOLO DE FRONTERA</span><h1>BASTIÓN</h1></div></div>
+          <div class="menu-status"><span><i></i> SISTEMA EN LÍNEA</span><button id="sound-toggle" class="sound-toggle" type="button" aria-label="Silenciar sonido" title="Sonido activado"><span class="sound-wave">♫</span></button></div>
+        </header>
+        <div class="menu-shell">
+          <aside class="operator-stage" aria-live="polite">
+            <div class="stage-noise"></div><div class="stage-grid"></div>
+            <div class="stage-top"><span class="eyebrow">OPERADOR EN FOCO</span><span class="stage-tag">DESPLIEGUE 01</span></div>
+            <div id="hero-portrait" class="hero-portrait"></div>
+            <div class="stage-bottom"><div><span class="eyebrow">UNIDAD DE CAMPO</span><h2 id="hero-name">Vanguardia</h2><p id="hero-passive">Más resistencia y daño estable.</p></div><span class="hero-id">B-01</span></div>
+            <div class="hero-stats"><div><span>RESISTENCIA</span><b id="hero-hp-stat">190</b><i><em style="width:82%"></em></i></div><div><span>MOVILIDAD</span><b id="hero-speed-stat">250</b><i><em style="width:68%"></em></i></div><div><span>ALCANCE</span><b id="hero-range-stat">420</b><i><em style="width:55%"></em></i></div></div>
+            <div class="stage-coordinate"><span>SEÑAL DEL SECTOR</span><b id="sector-biome">FALLA BASÁLTICA</b></div>
+          </aside>
+          <div class="deployment-controls">
+            <div class="config-title"><div><span class="eyebrow">PLANIFICACIÓN TÁCTICA</span><h2>Armá tu despliegue</h2></div><span class="config-signal">CONFIGURACIÓN LOCAL</span></div>
+            <section class="setup-section operator-picker"><div class="section-heading"><h3>Elegí operador</h3><span>01 · PERFIL</span></div><div id="hero-options" class="hero-option-grid"></div></section>
+            <section class="setup-section mode-picker"><div class="section-heading"><h3>Modo de juego</h3><span>02 · PROTOCOLO</span></div><div class="mode-option-grid">
+              <button class="mode-card selected" type="button" data-mode="solo"><span class="mode-art solo-art"><i></i><i></i></span><b>Frontera</b><small>Un operador · campaña libre</small><em>SOLO</em></button>
+              <button class="mode-card" type="button" data-mode="coop"><span class="mode-art coop-art"><i></i><i></i></span><b>Dúo local</b><small>Dos operadores en el mismo sector</small><em>CO-OP</em></button>
+              <button class="mode-card" type="button" data-mode="daily"><span class="mode-art daily-art"><i></i><i></i></span><b>Desafío diario</b><small id="daily-challenge-title">Regla rotativa</small><em>ROTATIVO</em></button>
+            </div><p id="daily-challenge-rule" class="mode-rule" hidden></p></section>
+            <div id="coop-config" class="coop-config" hidden><label class="field-label" for="hero2-select">Segundo operador</label><select id="hero2-select" class="select-control"><option value="ranger">Explorador</option><option value="vanguard">Vanguardia</option><option value="engineer">Ingeniera</option></select><small>Jugador 2: flechas + click derecho.</small></div>
+            <section class="setup-section sector-picker"><div class="section-heading"><h3>Sector de combate</h3><span id="unlock-summary">SECTORES 1/3 · RELIQUIAS 0/8</span></div><div id="sector-options" class="sector-option-grid"></div></section>
+            <section class="setup-section relic-picker"><div class="section-heading"><div><h3>Reliquia de expedición</h3><small>Las reliquias se ganan jugando; elegí una que ya hayas recuperado.</small></div><span id="relic-progress">00 / 08</span></div><div id="relic-options" class="relic-option-grid"></div><p id="relic-description" class="relic-description" aria-live="polite"></p></section>
+            <div class="launch-row"><div><span class="eyebrow">RECURSOS DE ARRANQUE</span><b><span id="starting-credits">180</span> <small>◆</small></b><span class="launch-hint">Primero invertí en planos y cobertura.</span></div><button id="start-button" class="primary-button">INICIAR DESPLIEGUE <span>↗</span></button></div>
+            <details class="advanced-config"><summary>Semilla y récords</summary><div class="advanced-body">
+              <label class="field-label" for="seed-input">Código de sector · compartir o repetir mapa</label><div class="seed-controls"><input id="seed-input" class="text-control" type="text" maxlength="40" placeholder="BASTION:0:SEMILLA" /><button id="copy-seed" class="utility-button" type="button">COPIAR</button></div><p id="seed-status" class="microcopy seed-status">La misma semilla genera el mismo terreno.</p>
+              <div class="records-block"><div class="records-heading"><span class="eyebrow">RÉCORDS LOCALES</span></div><div id="record-list" class="record-list"></div><div class="transfer-controls"><textarea id="records-transfer" rows="2" placeholder="Exportá o pegá aquí datos de récords"></textarea><div><button id="export-records" class="utility-button" type="button">EXPORTAR</button><button id="import-records" class="utility-button" type="button">IMPORTAR</button></div><small id="transfer-status">Los récords se guardan en este navegador.</small></div></div>
+            </div></details>
+            <select id="map-select" class="sr-only" aria-hidden="true" tabindex="-1"><option value="0">Las Tierras Rojas</option></select>
+            <select id="hero-select" class="sr-only" aria-hidden="true" tabindex="-1"><option value="vanguard">Vanguardia</option></select>
+            <select id="relic-select" class="sr-only" aria-hidden="true" tabindex="-1"><option value="none">Sin reliquia</option></select>
+            <input id="coop-toggle" class="sr-only" type="checkbox" tabindex="-1" aria-hidden="true" />
+            <input id="challenge-toggle" class="sr-only" type="checkbox" tabindex="-1" aria-hidden="true" />
           </div>
         </div>
-        <div class="menu-footer"><span>BASTIÓN / BUILD 02</span><span>SEÑAL DE ALERTA: <b>EXTREMA</b></span></div>
+        <div class="menu-footer"><span>BASTIÓN / SECTOR 01</span><span>LOS PLANOS SE COMPRAN EN CAMPO · LAS RELIQUIAS SE GANAN</span></div>
       </section>
-
       <section id="game-screen" class="screen game-screen" hidden>
         <div class="game-topbar">
           <button id="back-button" class="icon-button" title="Volver al menú">←</button>
@@ -66,6 +61,7 @@
           <div class="top-stat credits"><small>CHATARRA</small><b id="credits-label">0</b></div>
           <div class="top-stat challenge-stat"><small>MODO</small><b id="challenge-label">ESTÁNDAR</b></div>
           <button id="mode-button" class="mode-button"><span class="mode-led"></span><span id="mode-label">DISPARO AUTOMÁTICO</span><kbd>F</kbd></button>
+          <button id="command-toggle" class="command-toggle" type="button" aria-controls="command-panel" aria-expanded="false"><span>☷</span> ÓRDENES</button>
         </div>
         <div class="game-layout">
           <div class="battle-wrap">
@@ -78,16 +74,16 @@
             </div>
             <div id="wave-notice" class="wave-notice" hidden></div>
             <div class="battle-help"><span>WASD mover</span><span>CLICK construir / apuntar</span><span id="coop-help" hidden>J2 · FLECHAS + CLICK DERECHO</span><span>F cambiar disparo</span><span>E objetivo</span></div>
+            <button id="wave-button" class="wave-button field-wave-button">INICIAR OLEADA <span>SPACE</span></button>
           </div>
-          <aside class="command-panel">
+          <aside id="command-panel" class="command-panel" aria-label="Panel de órdenes">
             <div class="panel-heading"><div><span class="eyebrow">ORDEN DE CAMPO</span><h2>Defensas</h2></div><span id="phase-chip" class="phase-chip">PREPARACIÓN</span></div>
             <p class="panel-note">Elegí una estructura y colocala fuera de las rutas. El enemigo escala con cada torre.</p>
-            <div class="energy-panel"><div><span class="eyebrow">RED ENERGÉTICA</span><b id="energy-value">72 / 100</b></div><div class="bar energy-bar"><i id="energy-bar"></i></div><small id="energy-rate">1.8 energía / s</small></div>
+            <div class="energy-panel"><div><span class="eyebrow">RED ENERGÉTICA</span><b id="energy-value">50 / 80</b></div><div class="bar energy-bar"><i id="energy-bar"></i></div><small id="energy-rate">1.3 energía / s</small></div>
             <div class="field-status"><div><span class="eyebrow">CLIMA</span><b id="weather-value">Calma</b></div><p id="weather-copy">El campo está estable.</p></div>
             <div class="objective-card"><div class="eyebrow">OBJETIVO SECUNDARIO</div><h3 id="objective-title">—</h3><p id="objective-copy">—</p><div class="bar objective-bar"><i id="objective-bar"></i></div></div>
             <div id="tower-list" class="tower-list"></div>
             <div class="selected-card" id="tower-info"><span class="eyebrow">SIN SELECCIÓN</span><p>Seleccioná una torreta para ver su función y costo.</p></div>
-            <button id="wave-button" class="wave-button">INICIAR OLEADA <span>SPACE</span></button>
             <div class="threat-meter"><div><span>ÍNDICE DE AMENAZA</span><b id="threat-value">BAJO</b></div><div class="threat-track"><i id="threat-bar"></i></div></div>
             <div class="panel-tip"><span>⚠</span><p id="tip-text">Los jefes registran cada estructura que construís.</p></div>
           </aside>
