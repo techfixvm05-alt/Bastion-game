@@ -40,3 +40,26 @@ Juego de defensa táctica escrito en JavaScript nativo. Se publica como sitio es
 
 - Añadir desafíos de equipo con variantes de objetivos que requieran cambiar operadores durante la partida.
 - Añadir patrones de clima ligados al terreno y enemigos que preparen emboscadas antes de cambiar de ruta.
+
+## Historia y campaña (v3)
+
+- Historia en `js/lore.js`: 4 protagonistas (Mara, la última humana; Kael-7, cyborg; Nova, IA rebelde; Eco-0, clon criogénico) y 6 capítulos en 3 actos.
+- 6 sectores encadenados; cada uno se desbloquea al superar cierta oleada o completar el objetivo del anterior.
+- Al terminar cada nivel se ganan monedas ◈ para subir las reliquias hasta nivel 5 (más ventaja, menos desventaja).
+- El index usa rutas relativas, por lo que funciona en Vercel y en subcarpetas. Abrilo con un servidor local (`npx serve .`), no con doble click, porque usa módulos ES.
+
+## Novedades (v4)
+
+- **Cámara más amplia:** `ZOOM` en `js/config.js` (0.66). Bajalo para ver más mapa, subilo para acercar.
+- **Baterías por torreta:** cada torre gasta su propia carga al disparar. Los generadores cercanos la recargan; con **R** el operador recarga las torres que tenga cerca usando la reserva global.
+- **Mejoras temporales:** los bichos sueltan objetos (sobrecarga, furia, batería, nanobots, chatarra) que se recogen caminando encima. Los jefes siempre sueltan.
+- **Combo:** matar seguido sube el bonus de chatarra hasta +100%.
+- **Tienda de partida (B):** 6 mejoras de hasta nivel 6 y reparación del núcleo, pagadas con chatarra; el juego se pausa mientras está abierta.
+- **Oscuridad:** ciclo de noche; solo se ven las zonas iluminadas por el núcleo, el operador, las torres con carga y los objetos.
+
+## Novedades (v5)
+
+- **Torretas:** mejoran hasta nivel 3; en nivel 3 evolucionan a una de dos ramas (`js/systems/evolution.js`) y después suben hasta nivel 5.
+- **Campaña:** cada capítulo tiene objetivo de oleadas (`GOALS` en `js/lore.js`). Ganar desbloquea el siguiente sector y entrega una reliquia.
+- **Historia:** diálogos de inicio y cierre, mensajes de radio durante la partida (`STORY` en `js/lore.js`, motor en `js/story.js`). Click/Espacio avanza, Esc salta.
+- **Reliquias:** cada una tiene origen y un secreto que se revela en nivel 3.
