@@ -45,6 +45,29 @@ export function drawTerrain(ctx) {
     if (route.fissures) { pathStroke(ctx, route, 4, 'rgba(255,146,91,.54)', [5, 14]); }
   }
   for (const route of S.map.routes) { pathStroke(ctx, route, 74, `${colors.accent}22`); pathStroke(ctx, route, 3, `${colors.accent}aa`, [2, 22]); }
+  // Diferencias visuales por capítulo: estas estructuras no bloquean terreno, pero hacen cada sector reconocible.
+  ctx.save();
+  const landmarks = S.mapIndex % 6;
+  for (let i = 0; i < 5; i++) {
+    const angle = i * Math.PI * 2 / 5 + S.mapIndex * .63;
+    const x = CORE.x + Math.cos(angle) * (430 + i * 85);
+    const y = CORE.y + Math.sin(angle) * (330 + i * 70);
+    if (landmarks === 0 || landmarks === 3) {
+      ctx.fillStyle = i % 2 ? '#76624d' : '#a28b67';
+      ctx.beginPath(); ctx.moveTo(x - 24, y + 28); ctx.lineTo(x - 8, y - 55); ctx.lineTo(x + 22, y - 18); ctx.lineTo(x + 34, y + 28); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = `${colors.accent}88`; ctx.lineWidth = 2; ctx.stroke();
+    } else if (landmarks === 1 || landmarks === 4) {
+      ctx.fillStyle = '#303335'; ctx.fillRect(x - 28, y - 24, 56, 48);
+      ctx.strokeStyle = colors.accent; ctx.lineWidth = 3; ctx.strokeRect(x - 28, y - 24, 56, 48);
+      ctx.fillStyle = '#b1a26f'; ctx.fillRect(x - 18, y - 17, 36, 5);
+      ctx.fillStyle = colors.accent; ctx.fillRect(x - 4, y - 38, 8, 14);
+    } else {
+      ctx.fillStyle = 'rgba(92,181,190,.18)';
+      ctx.beginPath(); ctx.moveTo(x, y - 46); ctx.lineTo(x + 31, y + 18); ctx.lineTo(x + 8, y + 38); ctx.lineTo(x - 28, y + 12); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = `${colors.accent}cc`; ctx.lineWidth = 2; ctx.stroke();
+    }
+  }
+  ctx.restore();
   for (const [index, [x, y, w, h]] of S.map.obstacles.entries()) {
     const generated = index >= (S.map.patternObstacleStart ?? Infinity), style = S.map.terrainPattern?.style;
     ctx.fillStyle = 'rgba(5,9,12,.38)'; ctx.fillRect(x + 10, y + 14, w, h);

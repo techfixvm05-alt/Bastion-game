@@ -76,6 +76,10 @@ export function drawEnemy(ctx,e) {
     ctx.beginPath();ctx.ellipse(0,0,r*.8,r,0,0,Math.PI*2);ctx.fillStyle=body;ctx.fill();ctx.strokeStyle='#edb4ed';ctx.lineWidth=3;ctx.stroke();
     for(let i=-1;i<=1;i++){ctx.beginPath();ctx.moveTo(i*r*.35,r*.45);ctx.lineTo(i*r*.58,r*1.12);ctx.strokeStyle='#d58ad4';ctx.lineWidth=4;ctx.stroke();}
     ctx.beginPath();ctx.arc(0,-r*.16,r*.2,0,Math.PI*2);ctx.fillStyle='#ffd9f9';ctx.fill();
+  } else if(e.type==='gunner'){
+    ctx.beginPath();ctx.moveTo(-r*.82,-r*.72);ctx.lineTo(r*.72,-r*.72);ctx.lineTo(r*.95,r*.55);ctx.lineTo(-r*.75,r*.72);ctx.closePath();ctx.fillStyle=body;ctx.fill();ctx.strokeStyle='#ff9baa';ctx.lineWidth=3;ctx.stroke();
+    ctx.beginPath();ctx.moveTo(r*.1,-r*.2);ctx.lineTo(r*1.45,-r*.05);ctx.strokeStyle='#ffb1ba';ctx.lineWidth=r*.22;ctx.stroke();
+    ctx.fillStyle='#ffe0e4';ctx.fillRect(r*.92,-r*.13,r*.55,r*.26);
   } else if(e.type==='healer'){
     ctx.beginPath();ctx.arc(0,0,r*.78,0,Math.PI*2);ctx.fillStyle=body;ctx.fill();ctx.strokeStyle='#b7f0a4';ctx.lineWidth=3;ctx.stroke();
     ctx.fillStyle='#eaffcf';ctx.fillRect(-r*.12,-r*.5,r*.24,r);ctx.fillRect(-r*.5,-r*.12,r,r*.24);
@@ -88,7 +92,7 @@ export function drawEnemy(ctx,e) {
     ctx.beginPath();ctx.ellipse(0,0,r*.38,r*.2,.15,0,Math.PI*2);ctx.fillStyle='#251d1b';ctx.fill();ctx.fillStyle='#ffcc7c';ctx.fillRect(-r*.23,-2,r*.46,4);
   }
   ctx.beginPath();ctx.arc(0,0,r+4+Math.sin(e.anim*3+e.pulse)*2,.15+e.anim*.16,Math.PI*1.7+e.anim*.16);ctx.strokeStyle=`${c}88`;ctx.lineWidth=1.5;ctx.setLineDash([3,8]);ctx.stroke();ctx.setLineDash([]);
-  if(e.type==='ranged'||e.type==='healer'||e.type==='saboteur'){
+  if(e.type==='ranged'||e.type==='gunner'||e.type==='healer'||e.type==='saboteur'){
     for(let i=0;i<3;i++){const a=e.anim*(i%2?-.8:1)+i*Math.PI*2/3,px=Math.cos(a)*(r+7),py=Math.sin(a)*(r+7);ctx.beginPath();ctx.arc(px,py,1.5+(i%2),0,Math.PI*2);ctx.fillStyle=i%2?'#fff1bc':'#dfffee';ctx.fill();}
   }
   if(e.slow>0){ctx.beginPath();ctx.arc(0,0,r+5,0,Math.PI*2);ctx.strokeStyle='#79e8f2';ctx.lineWidth=2;ctx.stroke();}
