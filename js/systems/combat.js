@@ -110,7 +110,7 @@ function towerFire(tower, dt) {
     tower.disabled = 0;
     tower.charge = 1;
     tower.maxCharge = 1;
-    tower.hp = Math.min(tower.maxHp, tower.hp + 5 * dt * tower.level);
+    tower.hp = Math.min(tower.maxHp, tower.hp + 5 * dt * tower.level * (tower.evo?.regen || 1));
     tower.clock = .45;
     return;
   }

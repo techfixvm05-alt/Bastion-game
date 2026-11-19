@@ -14,7 +14,7 @@ Juego de defensa táctica escrito en JavaScript nativo. Se publica como sitio es
 
 - **WASD** o flechas: mover al operador.
 - **M**: abrir o cerrar el mapa táctico completo. La partida se pausa mientras está abierto.
-- **Tutorial:** aparece en el primer despliegue y se puede volver a abrir desde el botón **?**.
+- **Tutorial:** aparece en el primer despliegue y se puede volver a abrir desde el botón **?**. Explica el panel **ÓRDENES**, cómo subir de nivel y evolucionar torretas, y las mejoras globales de la tienda con **B**.
 - **F** o el botón superior: alternar entre disparo automático y manual.
 - **Automático:** el operador ataca al enemigo cercano.
 - **Manual:** mantené click para apuntar y disparar.

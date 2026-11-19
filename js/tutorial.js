@@ -21,13 +21,20 @@ const STEPS = [
     tip: 'Los generadores recargan las torretas y amplían la energía disponible.'
   },
   {
-    label: '04 · COMBATÍ',
+    label: '04 · ÓRDENES Y MEJORAS',
+    title: 'Usá Órdenes para mejorar tus defensas',
+    text: 'Pulsá ÓRDENES para abrir el panel. Hacé click en una torreta colocada para ver su nivel, integridad y el botón MEJORAR. Subirla de nivel aumenta sus atributos; al nivel 3 podés elegir una evolución.',
+    tip: 'B abre la tienda de mejoras globales y reparación del núcleo cuando no hay una oleada activa. ÓRDENES también muestra energía, clima, amenaza y objetivo.',
+    visual: 'orders'
+  },
+  {
+    label: '05 · COMBATÍ',
     title: 'Elegí cómo disparar',
     text: 'El operador ataca automáticamente al enemigo cercano. Pulsá F para cambiar a modo manual y mantené el click para apuntar y disparar. Q activa la habilidad; en cooperativo, Shift activa la del jugador 2.',
     tip: 'Los artilleros y otros enemigos a distancia apuntan al operador: la línea de aviso te deja tiempo para esquivar.'
   },
   {
-    label: '05 · INICIÁ LA OLEADA',
+    label: '06 · INICIÁ LA OLEADA',
     title: 'Protegé el núcleo y completá el objetivo',
     text: 'Cuando estés listo, iniciá la oleada con ESPACIO o el botón naranja. El panel de órdenes muestra el estado del núcleo, la energía y el objetivo secundario. Acercate al marcador y mantené E cuando el sector lo pida.',
     tip: 'Un búnker escudo colocado sobre una ruta puede interceptar disparos y frenar el avance.'
@@ -48,6 +55,12 @@ function markSeen() {
 function renderStep() {
   const step = STEPS[stepIndex];
   const last = stepIndex === STEPS.length - 1;
+  const preview = step.visual === 'orders' ? `
+    <div class="tutorial-orders-preview" aria-hidden="true">
+      <div class="tutorial-orders-head"><b>☷ ÓRDENES</b><span>PREPARACIÓN</span></div>
+      <div class="tutorial-orders-card"><small>ESTRUCTURA · NIVEL 1</small><b>BALLESTA</b><p>Daño · alcance · integridad</p><span>MEJORAR · costo en chatarra</span></div>
+      <small class="tutorial-orders-caption">Seleccioná una torre en el campo para ver sus opciones</small>
+    </div>` : '';
   overlay.innerHTML = `
     <section class="tutorial-card" role="dialog" aria-modal="true" aria-labelledby="tutorial-title">
       <div class="tutorial-top"><span class="eyebrow">PROTOCOLO DE ENTRENAMIENTO</span><button class="tutorial-close" type="button" data-tutorial-close aria-label="Cerrar tutorial">×</button></div>
@@ -55,6 +68,7 @@ function renderStep() {
       <span class="tutorial-step">${step.label}</span>
       <h2 id="tutorial-title">${step.title}</h2>
       <p class="tutorial-copy">${step.text}</p>
+      ${preview}
       <p class="tutorial-tip"><b>CONSEJO</b>${step.tip}</p>
       <div class="tutorial-footer"><button class="tutorial-skip" type="button" data-tutorial-close>SALTAR TUTORIAL</button><div class="tutorial-actions">${stepIndex ? '<button class="tutorial-back" type="button" data-tutorial-back>ANTERIOR</button>' : ''}<button class="tutorial-next" type="button" data-tutorial-next>${last ? 'EMPEZAR DEFENSA' : 'SIGUIENTE'} <span>${last ? '↗' : `${stepIndex + 1}/${STEPS.length}`}</span></button></div></div>
     </section>`;

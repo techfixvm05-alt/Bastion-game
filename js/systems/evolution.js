@@ -7,14 +7,17 @@ export const EVOS = {
   cryo: [{ id: 'absolute', name: 'Cero absoluto', text: 'Daño ×1.8, alcance +20%', dmg: 1.8, rate: 1, range: 1.2, color: '#9be8ff' }, { id: 'efficient', name: 'Criogenia eficiente', text: 'Batería ×2.2 y cadencia ×1.3', dmg: 1, rate: 1.3, range: 1, charge: 2.2, color: '#6fd0e6' }],
   totem: [{ id: 'major', name: 'Pulso mayor', text: 'Daño ×2, alcance +30%', dmg: 2, rate: 1, range: 1.3, color: '#c7a8ff' }, { id: 'medic', name: 'Reparador', text: 'Vida ×1.6, alcance +15%, se autorrecarga', dmg: 1.2, rate: 1, range: 1.15, hp: 1.6, regen: 1.2, color: '#a6f0c0' }],
   inferno: [{ id: 'dragon', name: 'Aliento de dragón', text: 'Daño ×1.8, alcance +25%', dmg: 1.8, rate: 1, range: 1.25, color: '#ff8a5c' }, { id: 'plasma', name: 'Plasma', text: 'Cadencia ×1.5, daño ×1.2', dmg: 1.2, rate: 1.5, range: 1, color: '#ff5fd2' }],
+  shieldwall: [{ id: 'fortress', name: 'Fortaleza', text: 'Vida ×1.8 y reparación ×1.35', hp: 1.8, regen: 1.35, color: '#9bd1f0' }, { id: 'laststand', name: 'Última línea', text: 'Vida ×1.45 y reparación ×2.1', hp: 1.45, regen: 2.1, color: '#c4e8ff' }],
   generator: [{ id: 'fusion', name: 'Reactor de fusión', text: 'Producción ×1.8', gen: 1.8, store: 1, hp: 1.3, color: '#8bffc0' }, { id: 'bank', name: 'Banco de energía', text: 'Reserva ×2.2, producción ×1.25', gen: 1.25, store: 2.2, hp: 1.3, color: '#ffe066' }]
 };
 export const evoCost = type => Math.round(TOWERS[type].cost * 2.6 * (S.relicMods.towerCost || 1));
 
 export function evoHtml(t) {
   if (t.level < 3 || t.evo) return t.evo ? `<div class="evo-box"><span class="eyebrow">EVOLUCIÓN · ${t.evo.name.toUpperCase()}</span><small>${t.evo.text}</small></div>` : '';
+  const choices = EVOS[t.type] || [];
+  if (!choices.length) return '';
   const c = evoCost(t.type);
-  return `<div class="evo-box"><span class="eyebrow">EVOLUCIÓN DISPONIBLE · ${c} ◆</span>${EVOS[t.type].map(e => `<button type="button" data-evo="${e.id}" ${S.credits < c ? 'disabled' : ''}><b>${e.name}</b><small>${e.text}</small></button>`).join('')}</div>`;
+  return `<div class="evo-box"><span class="eyebrow">EVOLUCIÓN DISPONIBLE · ${c} ◆</span>${choices.map(e => `<button type="button" data-evo="${e.id}" ${S.credits < c ? 'disabled' : ''}><b>${e.name}</b><small>${e.text}</small></button>`).join('')}</div>`;
 }
 export function evolve(id) {
   const t = S.towers.find(x => x.id === S.selectedTower && !x.destroyed); if (!t || t.level < 3 || t.evo) return false;
@@ -23,4 +26,9 @@ export function evolve(id) {
   S.banner = `${e.name} · EVOLUCIÓN`; S.bannerClock = 2.5; S.effects.push({ type: 'pulse', x: t.x, y: t.y, age: 0, life: .7, color: e.color, radius: 130 });
   return true;
 }
-export function bindEvolution() { document.getElementById('tower-info')?.addEventListener('click', ev => { const b = ev.target.closest('[data-evo]'); if (b) evolve(b.dataset.evo); }); }
+export function bindEvolution(onEvolve = () => {}) {
+  document.getElementById('tower-info')?.addEventListener('click', ev => {
+    const b = ev.target.closest('[data-evo]');
+    if (b && evolve(b.dataset.evo)) onEvolve();
+  });
+}

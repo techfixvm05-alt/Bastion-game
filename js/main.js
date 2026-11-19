@@ -19,7 +19,7 @@ function launch(settings) {
   startRun(settings); showGame(); renderUI(); beginChapter(showTutorialForNewPlayer);
 }
 
-bindMenu(launch); bindShop(); bindEvolution();
+bindMenu(launch); bindShop(); bindEvolution(renderUI);
 bindUI({ onBack: renderRecords, onMode: renderUI });
 bindTutorial();
 bindInput(canvas, { onMode: renderUI, onWave: startWave, onBuild: renderUI, onSelection: renderUI, onMap: renderUI });
