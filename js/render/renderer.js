@@ -70,7 +70,10 @@ function drawSupportDrones(ctx) {
 function drawPlacement(ctx) {
   if (!S.buildType) return;
   const x = S.pointer.x + S.camera.x, y = S.pointer.y + S.camera.y, cfg = TOWERS[S.buildType];
-  const blocked = pointOnRoutes({ x, y }, S.map.routes, 104) || S.map.obstacles.some(([ox, oy, w, h]) => x > ox - 35 && x < ox + w + 35 && y > oy - 35 && y < oy + h + 35) || S.credits < towerCost(S.buildType);
+  const onRoute = pointOnRoutes({ x, y }, S.map.routes, 120);
+  const blocked = S.buildType === 'shieldwall'
+    ? !onRoute || S.map.obstacles.some(([ox, oy, w, h]) => x > ox - 35 && x < ox + w + 35 && y > oy - 35 && y < oy + h + 35) || S.credits < towerCost(S.buildType)
+    : pointOnRoutes({ x, y }, S.map.routes, 104) || S.map.obstacles.some(([ox, oy, w, h]) => x > ox - 35 && x < ox + w + 35 && y > oy - 35 && y < oy + h + 35) || S.credits < towerCost(S.buildType);
   ctx.save(); ctx.globalAlpha = .38; ctx.beginPath(); ctx.arc(x, y, cfg.range, 0, Math.PI * 2); ctx.fillStyle = cfg.color; ctx.fill(); ctx.globalAlpha = .8; ctx.strokeStyle = blocked ? '#ff6b68' : cfg.color; ctx.lineWidth = 2; ctx.setLineDash([8, 7]); ctx.stroke(); ctx.setLineDash([]);
   ctx.globalAlpha = .72; ctx.beginPath(); ctx.arc(x, y, 22, 0, Math.PI * 2); ctx.fillStyle = blocked ? '#e56a66' : cfg.color; ctx.fill(); ctx.restore();
 }
