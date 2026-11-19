@@ -58,6 +58,19 @@ export function createMap(index, seedText = 'bastion') {
   const anchor = anchors[hashSeed(`${index}:${seed}:cluster`) % anchors.length];
   const map = { ...source, seed, terrainPattern: pattern, patternObstacleStart: source.obstacles.length, objective: JSON.parse(JSON.stringify(source.objective)), routes: source.routes.map((points, id) => ({ id, points: points.map(p => ({ ...p })), bossAdded: false, fissures: 0 })), obstacles: source.obstacles.map(v => [...v]) };
   const random = seededRandom(hashSeed(`${index}:${seed}:layout-v2`));
+  const routeVariant = hashSeed(`${index}:${seed}:routes`) % 5;
+  for (const route of map.routes) {
+    if (route.points.length < 3) continue;
+    for (let i = route.points.length - 2; i >= 1; i--) {
+      const a = route.points[i - 1], b = route.points[i], c = route.points[i + 1];
+      const dx = b.x - a.x, dy = b.y - a.y, length = Math.hypot(dx, dy) || 1;
+      const nx = -dy / length, ny = dx / length;
+      const side = ((routeVariant + i + index) % 2 === 0 ? -1 : 1);
+      const bend = 55 + ((hashSeed(`${seed}:${index}:${route.id}:${i}`) % 125));
+      const point = { x: Math.round(b.x + nx * bend * side), y: Math.round(b.y + ny * bend * side) };
+      if (point.x > 120 && point.x < WORLD.width - 120 && point.y > 120 && point.y < WORLD.height - 120) route.points.splice(i, 0, point);
+    }
+  }
   let placed = 0;
   for (let attempts = 0; placed < 7 && attempts < 800; attempts++) {
     const candidate = terrainCandidate(pattern, random, anchor);

@@ -159,6 +159,7 @@ export function renderUI() {
   byId('threat-bar').style.width = `${threat}%`;
   byId('threat-value').textContent = threat < 25 ? 'BAJO' : threat < 55 ? 'ELEVADO' : threat < 82 ? 'SEVERO' : 'CRÍTICO';
   byId('tip-text').textContent = S.enemies.some(e => !e.dead && e.type === 'ranged') ? 'Aguijón: dispara desde lejos. Usá cobertura y priorizálo con daño rápido.'
+    : S.enemies.some(e => !e.dead && e.type === 'gunner') ? 'Artillero: dispara ráfagas rápidas a torres y operadores. Atacalo antes de que te acorralen.'
     : S.enemies.some(e => !e.dead && e.type === 'healer') ? 'Nódulo: cura aliados cercanos. Priorizalo antes que cure al grupo.'
     : S.enemies.some(e => !e.dead && e.type === 'shield') ? 'Baluarte: resistente y lento. La perforación y el control lo neutralizan.'
     : S.energy < 8 && S.towers.some(t => !t.destroyed && t.type !== 'generator') ? 'Reserva crítica: colocá generadores o las torretas dejarán de disparar.'

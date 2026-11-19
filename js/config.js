@@ -36,6 +36,7 @@ export const ENEMIES = {
   tank: { name: 'Ariete', hp: 255, speed: 42, damage: 36, reward: 30, radius: 26, color: '#819397', armor: .23 },
   split: { name: 'Muda', hp: 105, speed: 64, damage: 18, reward: 19, radius: 19, color: '#d48992', armor: 0 },
   ranged: { name: 'Aguijón', hp: 88, speed: 58, damage: 19, reward: 23, radius: 18, color: '#c282c5', armor: 0 },
+  gunner: { name: 'Artillero', hp: 72, speed: 62, damage: 25, reward: 26, radius: 17, color: '#ed7b89', armor: .04 },
   healer: { name: 'Nódulo', hp: 118, speed: 50, damage: 11, reward: 24, radius: 18, color: '#83c981', armor: 0 },
   shield: { name: 'Baluarte', hp: 165, speed: 46, damage: 23, reward: 27, radius: 21, color: '#7ca3d1', armor: .12 },
   flanker: { name: 'Desgarrador', hp: 76, speed: 126, damage: 21, reward: 24, radius: 15, color: '#e57878', armor: .02 },
