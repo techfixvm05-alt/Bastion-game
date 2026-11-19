@@ -13,6 +13,8 @@ Juego de defensa táctica escrito en JavaScript nativo. Se publica como sitio es
 ## Controles
 
 - **WASD** o flechas: mover al operador.
+- **M**: abrir o cerrar el mapa táctico completo. La partida se pausa mientras está abierto.
+- **Tutorial:** aparece en el primer despliegue y se puede volver a abrir desde el botón **?**.
 - **F** o el botón superior: alternar entre disparo automático y manual.
 - **Automático:** el operador ataca al enemigo cercano.
 - **Manual:** mantené click para apuntar y disparar.
@@ -31,6 +33,8 @@ Juego de defensa táctica escrito en JavaScript nativo. Se publica como sitio es
 - Las reliquias de rebote, escolta, plasma y simbiosis cambian los disparos, generan apoyo o convierten zonas peligrosas en oportunidades.
 - Cada semilla elige de forma reproducible un patrón de terreno —esquirlas, espolones, cráteres o bancos de cristales— y genera sus obstáculos sin cerrar rutas, núcleo ni objetivos.
 - Los enemigos eligen accesos según la defensa: los desgarradores buscan flancos débiles, las sanguijuelas de red siguen generadores y los asaltanúcleos presionan el objetivo del sector.
+- Los artilleros, aguijones, ráfagas, prismas y ciclones disparan mientras avanzan. Una línea de aviso marca al operador que tienen en la mira.
+- El mapa táctico con **M** muestra todos los accesos, obstáculos, estructuras, enemigos, objetivo y campo visible de la cámara. Las flechas del terreno indican hacia dónde avanzan los enemigos.
 - Los jefes inspeccionan la mezcla de torretas y generadores, adaptan resistencias y atacan el objetivo secundario del sector. Cada jefe conserva su propio patrón de combate.
 - La campaña desbloquea Cantera al llegar a oleada 5 en Tierras Rojas y Delta al completar el objetivo de Cantera o llegar a oleada 8.
 - Cada día rota un desafío opcional con reglas y recompensas propias.
