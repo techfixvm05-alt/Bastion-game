@@ -75,7 +75,7 @@
 .hero-lore{margin:10px 0 0;font-size:12px;line-height:1.45;color:#b7c9bf}.hero-lore b{color:#e4ce76;font-size:11px;letter-spacing:.08em}
 .story-chapter{margin:10px 0 0;padding:10px 12px;border-left:3px solid var(--mint,#7fe4c0);background:rgba(255,255,255,.03);font-size:12px;line-height:1.5;color:#b7c9bf}.story-chapter b{color:#e4ce76;letter-spacing:.06em}
 .relic-upgrade{display:flex;align-items:center;gap:12px;margin-top:10px;font-size:12px;color:#b7c9bf}.relic-upgrade b{color:#e4ce76}.relic-upgrade button:disabled{opacity:.45;cursor:not-allowed}
-.shop-overlay{position:absolute;inset:0;z-index:20;display:grid;place-items:center;background:rgba(2,6,10,.72);backdrop-filter:blur(3px)}.shop-overlay[hidden]{display:none}
+.shop-overlay{position:absolute;inset:0;z-index:20;display:grid;place-items:center;background:rgba(2,6,10,.72);backdrop-filter:blur(3px);touch-action:manipulation}.shop-overlay[hidden]{display:none}
 .shop-card{width:min(560px,94%);max-height:92%;overflow:auto;padding:18px;border:1px solid rgba(255,224,102,.35);background:#0b141a;box-shadow:0 0 40px rgba(255,224,102,.12)}
 .shop-head{display:flex;justify-content:space-between;align-items:end;margin-bottom:12px}.shop-head h2{margin:2px 0 0}.shop-head b{color:#ffe066}
 .shop-list{display:grid;gap:8px}.shop-list button{display:grid;grid-template-columns:1fr auto;gap:2px 10px;text-align:left;padding:10px 12px;border:1px solid rgba(203,222,219,.16);background:rgba(255,255,255,.04);cursor:pointer}
