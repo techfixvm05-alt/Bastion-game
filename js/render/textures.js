@@ -124,11 +124,19 @@ export function drawTower(ctx,t) {
     ctx.beginPath();ctx.arc(0,0,r*.78,0,Math.PI*2);ctx.fillStyle='#1f3934';ctx.fill();ctx.strokeStyle='#9ce8c2';ctx.lineWidth=3;ctx.stroke();
     for(let i=0;i<3;i++){ctx.save();ctx.rotate(i*Math.PI*2/3+t.anim*.3);ctx.fillStyle='#557a6c';ctx.fillRect(-3,-r*.85,6,r*1.7);ctx.fillStyle='#b9f5d5';ctx.fillRect(-6,-r*.88,12,5);ctx.restore();}
     ctx.fillStyle='#d4ffe8';ctx.font='bold 21px monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('ϟ',0,1);
+  } else if(t.type==='shieldwall'){
+    ctx.save();
+    ctx.rotate(Math.PI/2);
+    ctx.beginPath();ctx.moveTo(-r*1.15,-r*.48);ctx.lineTo(r*1.15,-r*.48);ctx.lineTo(r*.92,r*.62);ctx.lineTo(-r*.92,r*.62);ctx.closePath();
+    ctx.fillStyle='#263e4a';ctx.fill();ctx.strokeStyle='#9bd1f0';ctx.lineWidth=3;ctx.stroke();
+    ctx.fillStyle='rgba(155,209,240,.28)';ctx.fillRect(-r*.82,-r*.34,r*1.64,r*.12);
+    ctx.restore();
   } else {
     ctx.beginPath();ctx.moveTo(-r*.55,r*.52);ctx.lineTo(-r*.35,-r*.55);ctx.lineTo(0,-r*.12);ctx.lineTo(r*.28,-r*.83);ctx.lineTo(r*.48,r*.55);ctx.closePath();ctx.fillStyle='#703c35';ctx.fill();ctx.strokeStyle='#ffa06e';ctx.lineWidth=2;ctx.stroke();
     ctx.beginPath();ctx.arc(r*.1,-r*.12,5+Math.sin(t.anim*8)*2,0,Math.PI*2);ctx.fillStyle='#ffcc73';ctx.fill();
   }
   for(let i=0;i<t.level;i++){ctx.fillStyle='#e8dab5';ctx.fillRect(-7+i*7,-r-8,4,4);}
+  if(t.evo){ctx.beginPath();ctx.arc(0,0,r+10,0,Math.PI*2);ctx.strokeStyle=t.evo.color;ctx.lineWidth=3;ctx.setLineDash([6,4]);ctx.stroke();ctx.setLineDash([]);}
   ctx.restore();
   if(t.disabled>0){ctx.beginPath();ctx.arc(t.x,t.y,r+8,0,Math.PI*2);ctx.strokeStyle='rgba(202,146,238,.85)';ctx.lineWidth=4;ctx.setLineDash([5,4]);ctx.stroke();ctx.setLineDash([]);}
   if(t.hp<t.maxHp){ctx.fillStyle='#11191d';ctx.fillRect(t.x-r,t.y+r+5,r*2,4);ctx.fillStyle='#79cfaa';ctx.fillRect(t.x-r,t.y+r+5,r*2*Math.max(0,t.hp/t.maxHp),4);}
@@ -138,7 +146,8 @@ export function drawTower(ctx,t) {
 export function drawHero(ctx, h = S.hero, player = 1) {
   if (!h || h.hp <= 0) return;
   const t=S.lastTime/1000||0, bob=Math.sin(t*7+(player-1)*1.4)*1.6;
-  ctx.save();ctx.translate(h.x,h.y+bob);ctx.rotate(h.aim);
+  ctx.save();ctx.beginPath();ctx.arc(h.x,h.y+bob,40,0,Math.PI*2);ctx.strokeStyle=h.color;ctx.lineWidth=2.5;ctx.globalAlpha=.55+Math.sin(t*4)*.2;ctx.setLineDash([7,6]);ctx.stroke();ctx.restore();
+  ctx.save();ctx.translate(h.x,h.y+bob);ctx.rotate(h.aim);ctx.scale(1.9,1.9);
   glow(ctx,0,0,46+Math.sin(t*3)*3,h.color,.22);
   ctx.fillStyle='rgba(0,0,0,.38)';ctx.beginPath();ctx.ellipse(2,13,21,11,0,0,Math.PI*2);ctx.fill();
   ctx.fillStyle=h.type==='engineer'?'#273944':h.type==='ranger'?'#3c3b2c':'#26393a';ctx.beginPath();ctx.moveTo(-12,-11);ctx.lineTo(4,-15);ctx.lineTo(15,-9);ctx.lineTo(18,8);ctx.lineTo(6,14);ctx.lineTo(-12,9);ctx.closePath();ctx.fill();ctx.strokeStyle=h.color;ctx.lineWidth=3;ctx.stroke();
@@ -148,6 +157,7 @@ export function drawHero(ctx, h = S.hero, player = 1) {
   ctx.beginPath();ctx.arc(1,-1,7,0,Math.PI*2);ctx.fillStyle='#15242a';ctx.fill();ctx.strokeStyle=h.color;ctx.lineWidth=2;ctx.stroke();
   ctx.beginPath();ctx.moveTo(4,-4);ctx.lineTo(19,-3);ctx.lineTo(29,0);ctx.lineTo(19,4);ctx.lineTo(4,4);ctx.closePath();ctx.fillStyle='#cddbd3';ctx.fill();ctx.strokeStyle='#33474a';ctx.lineWidth=2;ctx.stroke();
   ctx.strokeStyle=h.color;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(12,0);ctx.lineTo(25,0);ctx.stroke();ctx.restore();
+  ctx.fillStyle='#e9f6ee';ctx.font='bold 18px monospace';ctx.textAlign='center';ctx.fillText(player===2?'P2':'P1',h.x,h.y-58);
   if(player===2){ctx.fillStyle='#10181c';ctx.fillRect(h.x-7,h.y-29,14,12);ctx.fillStyle=h.color;ctx.font='bold 10px monospace';ctx.textAlign='center';ctx.fillText('2',h.x,h.y-20);}
   if(S.fireMode==='manual') { const pointer=player===2?S.pointer2:S.pointer;const x=pointer.x+S.camera.x,y=pointer.y+S.camera.y;ctx.beginPath();ctx.arc(x,y,10,0,Math.PI*2);ctx.strokeStyle=player===2?'rgba(239,183,111,.9)':'rgba(240,239,202,.85)';ctx.lineWidth=1.5;ctx.stroke();ctx.beginPath();ctx.moveTo(x-15,y);ctx.lineTo(x-5,y);ctx.moveTo(x+5,y);ctx.lineTo(x+15,y);ctx.moveTo(x,y-15);ctx.lineTo(x,y-5);ctx.moveTo(x,y+5);ctx.lineTo(x,y+15);ctx.stroke();}
 }
