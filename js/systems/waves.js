@@ -4,12 +4,22 @@ import { spawnEnemy } from './enemies.js';
 import { bossForWave, spawnBoss } from './bosses.js';
 import { choose, rand } from '../utils.js';
 import { cue } from '../audio.js';
+import { refreshShop, toggleShop } from './shop.js';
 
 export function startWave() {
   if (S.phase !== 'playing' || S.waveActive) return;
+  toggleShop(false);
   S.wave++; S.waveActive = true; S.restClock = 0; S.bossSpawned = false;
   cue('wave');
   const boss = bossForWave(S.wave);
+  if (boss) {
+    const route = S.map.routes[Math.floor(Math.random() * S.map.routes.length)];
+    S.bossIncoming = { x: route.points[0].x, y: route.points[0].y, kind: boss };
+    S.bossIncomingClock = 9;
+  } else {
+    S.bossIncoming = null;
+    S.bossIncomingClock = 0;
+  }
   const count = Math.min(82, Math.ceil((5 + S.wave * 2 + Math.floor(S.towers.length * 1.15) + (S.coop ? 4 : 0)) * (S.challenge?.mods?.waveCount || 1)));
   const pool = ['swarm'];
   if (S.wave >= 2) pool.push('runner');
@@ -26,6 +36,7 @@ export function startWave() {
 }
 
 export function updateWaves(dt) {
+  S.bossIncomingClock = Math.max(0, (S.bossIncomingClock || 0) - dt);
   if (!S.waveActive && S.wave === 0) return;
   if (S.waveActive && S.queue.length) {
     S.spawnClock -= dt;
@@ -40,6 +51,7 @@ export function updateWaves(dt) {
     S.waveActive = false; S.restClock = 12;
     S.banner = `OLEADA ${S.wave} ELIMINADA`; S.bannerClock = 2.8;
     S.credits += (60 + S.wave * 10) * (S.challenge?.mods?.rewardCredits || 1);
+    refreshShop();
   }
   if (!S.waveActive && S.wave > 0 && S.restClock > 0) {
     S.restClock -= dt;

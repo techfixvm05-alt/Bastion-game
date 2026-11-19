@@ -10,7 +10,7 @@ export function bossForWave(wave) {
   return ['colossus', 'cartographer', 'matriarch'][(Math.floor(wave / 5) - 1) % 3];
 }
 
-const TOWER_LABELS = { ballista: 'ballestas', mortar: 'morteros', cryo: 'emisores criónicos', totem: 'totems', inferno: 'lanzallamas' };
+const TOWER_LABELS = { ballista: 'ballestas', mortar: 'morteros', cryo: 'emisores criónicos', totem: 'totems', inferno: 'lanzallamas', shieldwall: 'búnkeres escudo', generator: 'generadores' };
 
 function inspectBossCounters(boss, initial = false) {
   const towers = S.towers.filter(t => !t.destroyed);
@@ -50,7 +50,8 @@ export function spawnBoss(kind) {
   const towers = S.towers.filter(t => !t.destroyed).length;
   const challenge = S.challenge?.mods || {};
   const hp = cfg.baseHp * (1 + S.wave * .17 + towers * .15) * (S.coop ? 1.22 : 1) * (challenge.bossHp || 1);
-  const boss = spawnEnemy('boss', null, { ...cfg, hp, bossKind: kind, color: cfg.color, radius: cfg.radius, speed: cfg.speed, damage: cfg.damage * (1 + S.wave * .075 + towers * .055) * (S.coop ? 1.12 : 1) * (challenge.bossDamage || 1), reward: cfg.reward + S.wave * 18 });
+  const incomingRoute = S.bossIncoming ? S.map.routes.find(route => route.points[0].x === S.bossIncoming.x && route.points[0].y === S.bossIncoming.y) : null;
+  const boss = spawnEnemy('boss', incomingRoute ? incomingRoute.id : null, { ...cfg, hp, bossKind: kind, color: cfg.color, radius: cfg.radius, speed: cfg.speed, damage: cfg.damage * (1 + S.wave * .075 + towers * .055) * (S.coop ? 1.12 : 1) * (challenge.bossDamage || 1), reward: cfg.reward + S.wave * 18 });
   if (!boss) return;
   cue('boss');
   boss.maxHp = boss.hp = hp; boss.bossKind = kind; boss.phase = 1; boss.attackClock = 4; boss.specialClock = 5;
@@ -121,8 +122,8 @@ function resolveImpact(effect) {
   if (effect.resolved) return;
   effect.resolved = true;
   if (effect.type !== 'impact') return;
-  if (dist(S.hero, effect) < effect.radius + 14) S.hero.hp -= effect.damage;
-  if (S.hero2 && dist(S.hero2, effect) < effect.radius + 14) S.hero2.hp -= effect.damage;
+  if (dist(S.hero, effect) < effect.radius + 14) S.hero.hp -= effect.damage * (S.hero.type === 'vanguard' && S.hero.abilityActive > 0 ? .35 : 1);
+  if (S.hero2 && dist(S.hero2, effect) < effect.radius + 14) S.hero2.hp -= effect.damage * (S.hero2.type === 'vanguard' && S.hero2.abilityActive > 0 ? .35 : 1);
   if (effect.energyDrain) S.energy = Math.max(0, S.energy - effect.energyDrain * (S.challenge?.mods?.energyDrain || 1));
   for (const tower of S.towers) {
     if (!tower.destroyed && dist(tower, effect) < effect.radius + 22) {

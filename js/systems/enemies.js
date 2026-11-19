@@ -1,3 +1,4 @@
+import { comboBonus, onKill } from './drops.js';
 import { ENEMIES, CORE, TOWERS, WORLD } from '../config.js';
 import { S, finishRun } from '../state.js';
 import { clamp, dist, nearest, rand } from '../utils.js';
@@ -92,7 +93,8 @@ export function spawnEnemy(type, routeIndex = null, bossData = null) {
 
 export function killEnemy(enemy) {
   if (enemy.dead) return;
-  enemy.dead = true; S.kills++; S.credits += enemy.reward * (S.relicMods.killCredits || 1) * (S.challenge?.mods?.rewardCredits || 1);
+  enemy.dead = true; S.kills++; S.credits += enemy.reward * (S.relicMods.killCredits || 1) * (S.challenge?.mods?.rewardCredits || 1) * (1 + comboBonus());
+  onKill(enemy);
   if (enemy.manualHit) S.runStats.manualKills++;
   if (enemy.boss) S.runStats.bossKills++;
   S.effects.push({ type: 'burst', x: enemy.x, y: enemy.y, age: 0, life: .48, color: enemy.color, radius: enemy.radius * 1.5 });
@@ -177,8 +179,7 @@ export function updateEnemies(dt) {
     const target = shot.target || S.hero, dx = target.x - shot.x, dy = target.y - shot.y, d = Math.hypot(dx, dy) || 1;
     shot.x += dx / d * shot.speed * dt; shot.y += dy / d * shot.speed * dt;
     if (d < shot.speed * dt + (target.radius || 14)) {
-      if (target === S.hero) target.hp -= shot.damage;
-      else target.hp -= shot.damage;
+      target.hp -= shot.damage * (target.type === 'vanguard' && target.abilityActive > 0 ? .35 : 1);
       cue('hit');
       shot.dead = true;
     }
