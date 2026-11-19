@@ -4,7 +4,9 @@ import { S } from './state.js';
 import { towerCost, blueprintCost, buyBlueprint, upgradeSelectedTower, setFireMode } from './systems/combat.js';
 import { startWave } from './systems/waves.js';
 import { objectiveStatus } from './systems/objectives.js';
-import { getChallenge, getChapter } from './systems/campaign.js';
+import { getChallenge, getChapter, renderCampaignMenu } from './systems/campaign.js';
+import { renderRelicCards } from './menu.js';
+import { MAPS } from './maps.js';
 
 let uiCallbacks = {};
 const byId = id => document.getElementById(id);
@@ -33,7 +35,32 @@ export function bindUI(callbacks = {}) {
     const panel = byId('command-panel'), open = !panel.classList.contains('open');
     panel.classList.toggle('open', open); byId('command-toggle').setAttribute('aria-expanded', String(open));
   });
-  byId('back-button').addEventListener('click', () => { S.phase = 'menu'; byId('game-screen').hidden = true; byId('menu-screen').hidden = false; callbacks.onBack?.(); });
+  byId('back-button').addEventListener('click', () => {
+    S.phase = 'menu';
+    byId('game-screen').hidden = true;
+    byId('menu-screen').hidden = false;
+    renderCampaignMenu();
+    renderRelicCards();
+    callbacks.onBack?.();
+  });
+  byId('next-chapter-button').addEventListener('click', () => {
+    if (!S.won) return;
+    const nextIndex = S.mapIndex + 1;
+    renderCampaignMenu();
+    const mapSelect = byId('map-select');
+    const option = mapSelect?.querySelector(`option[value="${nextIndex}"]`);
+    if (!option || option.disabled) return;
+    mapSelect.value = String(nextIndex);
+    byId('start-button').click();
+  });
+  byId('result-menu-button').addEventListener('click', () => {
+    S.phase = 'menu';
+    byId('game-screen').hidden = true;
+    byId('menu-screen').hidden = false;
+    renderCampaignMenu();
+    renderRelicCards();
+    callbacks.onBack?.();
+  });
   byId('tower-info').addEventListener('click', event => {
     if (!event.target.closest('#upgrade-button')) return;
     const result = upgradeSelectedTower(); if (!result.ok) S.banner = result.message; renderUI();
@@ -144,5 +171,9 @@ export function renderUI() {
     byId('result-screen').hidden = false;
     byId('result-title').textContent = S.won ? 'CAPÍTULO COMPLETADO' : S.coreHp <= 0 ? 'NÚCLEO PERDIDO' : 'OPERADOR CAÍDO';
     byId('result-copy').textContent = S.won ? `${getChapter(S.mapIndex).victory} +${S.coinsEarned || 0} monedas.${S.relicGranted ? ' Reliquia recuperada: ' + RELICS[S.relicGranted].name + '.' : ''}` : `${S.banner || 'La defensa terminó.'} Llegaste a la oleada ${S.wave} de ${S.goalWave} y eliminaste ${S.kills} enemigos. +${S.coinsEarned || 0} monedas para mejorar reliquias.`;
+    const nextButton = byId('next-chapter-button');
+    const hasNext = S.won && S.mapIndex + 1 < MAPS.length;
+    nextButton.hidden = !hasNext;
+    byId('retry-button').textContent = S.won ? 'REPETIR CAPÍTULO ↻' : 'VOLVER A DESPLEGAR ↻';
   }
 }
