@@ -3,9 +3,10 @@ export const VIEW = { width: 1280, height: 720 };
 export const CORE = { x: 1400, y: 950, radius: 64, maxHp: 1000 };
 
 export const HEROES = {
-  vanguard: { name: 'Vanguardia', hp: 190, speed: 250, damage: 28, range: 420, cooldown: .34, color: '#7fe4c0', passive: 'Más resistencia y daño estable.' },
-  ranger: { name: 'Explorador', hp: 145, speed: 305, damage: 23, range: 510, cooldown: .25, color: '#e4ce76', passive: 'Más movilidad y cadencia.' },
-  engineer: { name: 'Ingeniera', hp: 160, speed: 255, damage: 25, range: 440, cooldown: .31, color: '#7dc6eb', passive: 'Repara lentamente el núcleo fuera de combate.' }
+  vanguard: { name: 'Vanguardia', hp: 190, speed: 250, damage: 28, range: 420, cooldown: .34, color: '#7fe4c0', passive: 'Más resistencia y daño estable.', ability: 'Bastión', abilityKey: 'Q', abilityDesc: 'Reduce todo el daño recibido durante 4 s.', abilityCooldown: 14 },
+  ranger: { name: 'Explorador', hp: 145, speed: 305, damage: 23, range: 510, cooldown: .25, color: '#e4ce76', passive: 'Más movilidad y cadencia.', ability: 'Impulso', abilityKey: 'Q', abilityDesc: 'Aumenta la velocidad durante 4 s.', abilityCooldown: 12 },
+  sentinel: { name: 'Centinela', hp: 170, speed: 265, damage: 34, range: 360, cooldown: .36, color: '#e58bd0', passive: 'Daño alto y alcance corto.', ability: 'Pulso radial', abilityKey: 'Q', abilityDesc: 'Daña y empuja a enemigos cercanos.', abilityCooldown: 15 },
+  engineer: { name: 'Ingeniera', hp: 160, speed: 255, damage: 25, range: 440, cooldown: .31, color: '#7dc6eb', passive: 'Repara lentamente el núcleo fuera de combate.', ability: 'Sobrevivir', abilityKey: 'Q', abilityDesc: 'Repara torretas cercanas y el núcleo.', abilityCooldown: 16 }
 };
 
 export const TOWERS = {
@@ -14,6 +15,7 @@ export const TOWERS = {
   cryo: { name: 'Emisor criónico', cost: 110, planCost: 70, range: 285, rate: .22, damage: 11, energyUse: .42, color: '#71d6e8', role: 'Control', detail: 'Rayo continuo: ralentiza y expone al objetivo a más daño.', icon: '❄' },
   totem: { name: 'Totem de pulso', cost: 145, planCost: 90, range: 230, rate: 1.15, damage: 28, energyUse: 2, color: '#b796e8', role: 'Soporte', detail: 'Pulso de daño y reparación moderada a torres cercanas.', icon: '✣' },
   inferno: { name: 'Lanzallamas', cost: 105, planCost: 75, range: 160, rate: .14, damage: 9, energyUse: .34, color: '#fa775c', role: 'Combustión', detail: 'Cono de fuego: incendia grupos y mantiene daño con el tiempo.', icon: '♨' },
+  shieldwall: { name: 'Búnker escudo', cost: 135, planCost: 90, range: 0, rate: 0, damage: 0, energyUse: 0, output: 0, storage: 0, color: '#9bd1f0', role: 'Escudo', detail: 'Muralla colocable sobre rutas. Bloquea enemigos y absorbe daño con gran resistencia.', icon: '⬢' },
   generator: { name: 'Generador', cost: 150, planCost: 80, range: 125, rate: 0, damage: 0, energyUse: 0, output: 5.2, storage: 48, color: '#8bd6b0', role: 'Energía', detail: 'Aumenta la reserva máxima y genera energía para mantener activas las torretas.', icon: 'ϟ' }
 };
 
@@ -46,3 +48,7 @@ export const BOSSES = {
   cartographer: { name: 'LA CARTÓGRAFA', title: 'Mutación · abre rutas nuevas', baseHp: 1750, speed: 48, damage: 75, radius: 57, color: '#b28ae0', reward: 330 },
   matriarch: { name: 'MATRIZ DEL VACÍO', title: 'Asedio · pulsos y fracturas', baseHp: 1950, speed: 39, damage: 88, radius: 61, color: '#77b6d4', reward: 360 }
 };
+
+// Zoom de cámara: menor valor = campo de visión más amplio.
+export const ZOOM = .66;
+export const SEE = { width: VIEW.width / ZOOM, height: VIEW.height / ZOOM };

@@ -1,11 +1,13 @@
 import { S } from './state.js';
 import { TOWERS } from './config.js';
-import { placeTower, setFireMode } from './systems/combat.js';
+import { placeTower, setFireMode, triggerHeroAbility } from './systems/combat.js';
 import { dist } from './utils.js';
+import { ZOOM } from './config.js';
+import { toggleShop } from './systems/shop.js';
 
 function canvasPoint(canvas, event) {
   const rect = canvas.getBoundingClientRect();
-  return { x: (event.clientX - rect.left) * canvas.width / rect.width, y: (event.clientY - rect.top) * canvas.height / rect.height };
+  return { x: (event.clientX - rect.left) * canvas.width / rect.width / ZOOM, y: (event.clientY - rect.top) * canvas.height / rect.height / ZOOM };
 }
 
 export function bindInput(canvas, callbacks = {}) {
@@ -15,6 +17,10 @@ export function bindInput(canvas, callbacks = {}) {
     S.keys.add(key);
     if (key === 'f' && S.phase === 'playing') { setFireMode(); callbacks.onMode?.(); }
     if (key === ' ' && S.phase === 'playing') callbacks.onWave?.();
+    if (key === 'q' && S.phase === 'playing') triggerHeroAbility(S.hero);
+    if (key === 'shift' && S.coop && S.phase === 'playing') triggerHeroAbility(S.hero2);
+    if (key === 'b') toggleShop();
+    if (key === 'escape' && S.shopOpen) toggleShop(false);
     if (key === 'escape') { S.buildType = null; S.selectedTower = null; }
   });
   window.addEventListener('keyup', event => S.keys.delete(event.key.toLowerCase()));

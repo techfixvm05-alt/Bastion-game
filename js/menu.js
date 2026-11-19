@@ -1,4 +1,7 @@
 import { HEROES, RELICS } from './config.js';
+import { LORE, RELIC_LORE } from './lore.js';
+import { getChapter } from './systems/campaign.js';
+import { readCampaignProgress as _rp, getRelicLevel, relicUpgradeCost, upgradeRelic, MAX_RELIC_LEVEL } from './systems/campaign.js';
 import { MAPS } from './maps.js';
 import { exportRecordsText, importRecordsText, renderRecords } from './systems/records.js';
 import { decodeMapCode, encodeMapCode, getDailyChallenge, isRelicUnlocked, readCampaignProgress, renderCampaignMenu } from './systems/campaign.js';
@@ -20,6 +23,7 @@ function updateHero(type) {
   byId('hero-portrait').innerHTML = heroPortrait(type, hero.color);
   byId('hero-name').textContent = hero.name;
   byId('hero-passive').textContent = hero.passive;
+  const lore = LORE[type]; byId('hero-lore').innerHTML = lore ? `<b>${lore.role} · ${lore.real}</b><br>${lore.text}` : '';
   byId('hero-hp-stat').textContent = hero.hp;
   byId('hero-speed-stat').textContent = hero.speed;
   byId('hero-range-stat').textContent = hero.range;
@@ -29,7 +33,7 @@ function updateHero(type) {
 }
 
 function renderHeroes() {
-  const colors = { vanguard: '#83e2bf', ranger: '#e4ce76', engineer: '#7dc6eb' };
+  const colors = { vanguard: '#83e2bf', ranger: '#e4ce76', engineer: '#7dc6eb', sentinel: '#e58bd0' };
   byId('hero-select').innerHTML = Object.entries(HEROES).map(([id, hero]) => `<option value="${id}">${hero.name}</option>`).join('');
   byId('hero-options').innerHTML = Object.entries(HEROES).map(([id, hero]) => `
     <button class="hero-option" type="button" data-hero="${id}" style="--hero-color:${colors[id]}" aria-pressed="false">
@@ -41,6 +45,7 @@ function renderHeroes() {
 function updateSector(mapIndex) {
   const map = MAPS[mapIndex] || MAPS[0];
   byId('map-select').value = String(mapIndex);
+  { const ch = getChapter(mapIndex), box = byId('story-chapter'); if (box) box.innerHTML = `<b>${ch.act}</b> · ${ch.title}<br>${ch.text}`; }
   document.querySelectorAll('.sector-card').forEach(card => {
     const active = Number(card.dataset.map) === mapIndex;
     card.classList.toggle('selected', active);
@@ -72,7 +77,14 @@ export function renderRelicCards() {
     </button>`;
   }).join('');
   const selected = RELICS[chosen] || { name: 'Sin reliquia', description: 'Sin modificadores. Ganá reliquias al superar desafíos en el campo.' };
-  byId('relic-description').textContent = `${selected.name} · ${selected.description}`;
+  const lvl = getRelicLevel(chosen);
+  byId('relic-description').textContent = `${selected.name}${chosen !== 'none' ? ` · NV ${lvl}/${MAX_RELIC_LEVEL}` : ''} · ${selected.description}${RELIC_LORE[chosen] ? ` — ${RELIC_LORE[chosen].origin}${lvl >= 3 ? ' ' + RELIC_LORE[chosen].secret : ' (Nv 3 revela su secreto)'}` : ''}`;
+  const up = byId('relic-upgrade');
+  if (up) {
+    const cost = relicUpgradeCost(lvl), can = chosen !== 'none' && isRelicUnlocked(chosen) && lvl < MAX_RELIC_LEVEL;
+    up.innerHTML = `<span>MONEDAS: <b>${progress.coins} ◈</b></span>` + (can ? `<button type="button" class="utility-button" id="relic-upgrade-btn" ${progress.coins < cost ? 'disabled' : ''}>MEJORAR · ${cost} ◈</button>` : (chosen !== 'none' && lvl >= MAX_RELIC_LEVEL ? '<span>NIVEL MÁXIMO</span>' : ''));
+    const btn = byId('relic-upgrade-btn'); if (btn) btn.onclick = () => { if (upgradeRelic(chosen)) { cue('select'); renderRelicCards(); } };
+  }
   byId('starting-credits').textContent = String(Math.round(180 * (selected.mods?.startingCredits || 1)));
 }
 
