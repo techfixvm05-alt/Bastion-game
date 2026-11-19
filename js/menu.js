@@ -27,8 +27,9 @@ function updateHero(type) {
   byId('hero-hp-stat').textContent = hero.hp;
   byId('hero-speed-stat').textContent = hero.speed;
   byId('hero-range-stat').textContent = hero.range;
+  byId('hero-damage-stat').textContent = hero.damage;
   const fill = (id, value, max) => byId(id).parentElement.querySelector('em').style.width = `${Math.max(12, Math.min(100, value / max * 100))}%`;
-  fill('hero-hp-stat', hero.hp, 210); fill('hero-speed-stat', hero.speed, 340); fill('hero-range-stat', hero.range, 600);
+  fill('hero-hp-stat', hero.hp, 210); fill('hero-speed-stat', hero.speed, 340); fill('hero-range-stat', hero.range, 600); fill('hero-damage-stat', hero.damage, 40);
   renderRecords();
 }
 
@@ -37,7 +38,7 @@ function renderHeroes() {
   byId('hero-select').innerHTML = Object.entries(HEROES).map(([id, hero]) => `<option value="${id}">${hero.name}</option>`).join('');
   byId('hero-options').innerHTML = Object.entries(HEROES).map(([id, hero]) => `
     <button class="hero-option" type="button" data-hero="${id}" style="--hero-color:${colors[id]}" aria-pressed="false">
-      ${operatorGlyph(id)}<span><b>${hero.name}</b><small>${hero.passive}</small></span><em>${id === 'vanguard' ? 'B-01' : id === 'ranger' ? 'R-02' : 'E-03'}</em>
+      ${operatorGlyph(id)}<span><b>${hero.name}</b><small>${hero.passive}</small><small class="hero-card-damage">DAÑO ${hero.damage}</small></span><em>${id === 'vanguard' ? 'B-01' : id === 'ranger' ? 'R-02' : id === 'sentinel' ? 'S-04' : 'E-03'}</em>
     </button>`).join('');
   updateHero(byId('hero-select').value || 'vanguard');
 }
