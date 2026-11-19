@@ -8,7 +8,7 @@ import { startWave } from './systems/waves.js';
 import { saveCurrentRecord, renderRecords } from './systems/records.js';
 import { bindEvolution } from './systems/evolution.js';
 import { beginChapter, endChapter, updateStory } from './story.js';
-import { bindShop, renderShop } from './systems/shop.js';
+import { bindShop } from './systems/shop.js';
 import { renderCampaignMenu } from './systems/campaign.js';
 
 const canvas = document.getElementById('game-canvas');
@@ -28,7 +28,7 @@ function frame(time) {
   updateSimulation(dt);
   if (S.phase === 'over' && !S.recordSaved) { const run = saveCurrentRecord(); S.coinsEarned = run.coinsEarned || 0; S.relicGranted = run.relicGranted || null; S.recordSaved = true; endChapter(); renderCampaignMenu(); renderRelicCards(); renderRecords(); renderUI(); }
   updateStory(); render(canvas);
-  if (time - lastUi > 110) { renderUI(); if (S.shopOpen) renderShop(); lastUi = time; }
+  if (time - lastUi > 110) { renderUI(); lastUi = time; }
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
