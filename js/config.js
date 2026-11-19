@@ -47,7 +47,10 @@ export const ENEMIES = {
 export const BOSSES = {
   colossus: { name: 'EL COLOSO DE HIERRO', title: 'Asedio · aplasta defensas', baseHp: 2100, speed: 31, damage: 105, radius: 67, color: '#d77a56', reward: 300 },
   cartographer: { name: 'LA CARTÓGRAFA', title: 'Mutación · abre rutas nuevas', baseHp: 1750, speed: 48, damage: 75, radius: 57, color: '#b28ae0', reward: 330 },
-  matriarch: { name: 'MATRIZ DEL VACÍO', title: 'Asedio · pulsos y fracturas', baseHp: 1950, speed: 39, damage: 88, radius: 61, color: '#77b6d4', reward: 360 }
+  matriarch: { name: 'MATRIZ DEL VACÍO', title: 'Asedio · pulsos y fracturas', baseHp: 1950, speed: 39, damage: 88, radius: 61, color: '#77b6d4', reward: 360 },
+  stormcaller: { name: 'EL LLAMATORMENTAS', title: 'Orbes · proyectiles esquivables', baseHp: 1820, speed: 44, damage: 82, radius: 59, color: '#64d7ef', reward: 380 },
+  demolisher: { name: 'DEMOLIEDOR CERO', title: 'Artillería · lluvia de impacto', baseHp: 2240, speed: 27, damage: 112, radius: 72, color: '#f09a58', reward: 420 },
+  oracle: { name: 'ORÁCULO ROJO', title: 'Cadena · disparos múltiples', baseHp: 1680, speed: 52, damage: 92, radius: 55, color: '#ed697f', reward: 400 }
 };
 
 // Zoom de cámara: menor valor = campo de visión más amplio.
