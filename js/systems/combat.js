@@ -35,7 +35,11 @@ export function placeTower(type, x, y) {
   const cost = towerCost(type);
   if (S.credits < cost) return { ok: false, message: 'Falta chatarra.' };
   if (x < 85 || x > WORLD.width - 85 || y < 85 || y > WORLD.height - 85) return { ok: false, message: 'Fuera del sector.' };
-  if (type !== 'shieldwall' && pointOnRoutes({ x, y }, S.map.routes, 104)) return { ok: false, message: 'No bloquees una ruta.' };
+  if (type === 'shieldwall') {
+    if (!pointOnRoutes({ x, y }, S.map.routes, 120)) return { ok: false, message: 'Colocá el escudo sobre una ruta.' };
+  } else if (pointOnRoutes({ x, y }, S.map.routes, 104)) {
+    return { ok: false, message: 'No bloquees una ruta.' };
+  }
   if (dist({ x, y }, CORE) < 150) return { ok: false, message: 'Demasiado cerca del núcleo.' };
   if (S.map.obstacles.some(([ox, oy, w, h]) => x > ox - 35 && x < ox + w + 35 && y > oy - 35 && y < oy + h + 35)) return { ok: false, message: 'Terreno bloqueado.' };
   if (S.towers.some(t => !t.destroyed && dist({ x, y }, t) < 78)) return { ok: false, message: 'Dejá espacio entre torretas.' };

@@ -118,8 +118,9 @@ export function killEnemy(enemy) {
 function enemyAttack(e, dt) {
   if (e.attackClock > 0) return;
   const liveTowers = S.towers.filter(t => !t.destroyed);
+  const shield = nearest(liveTowers.filter(t => t.type === 'shieldwall'), e, 82);
   const tower = e.type === 'saboteur' ? nearbySabotageTarget(e)
-    : nearest(liveTowers, e, e.boss ? 200 : e.type === 'tank' ? 105 : 62);
+    : shield || nearest(liveTowers, e, e.boss ? 200 : e.type === 'tank' ? 105 : 62);
   if (tower) {
     tower.hp -= e.damage * dt * (e.boss ? 1.5 : e.type === 'tank' ? 1.9 : e.type === 'saboteur' ? 2.35 : 1);
     tower.hitFlash = .15;
@@ -149,6 +150,8 @@ function enemyAttack(e, dt) {
 
 function moveOnRoute(e, dt) {
   let target = e.route.points[e.routeAt + 1];
+  const shield = nearest(S.towers.filter(t => !t.destroyed && t.type === 'shieldwall'), e, 58);
+  if (shield) { enemyAttack(e, dt); return; }
   if (!target) { enemyAttack(e, dt); return; }
   if (e.type === 'saboteur' && nearbySabotageTarget(e)) { enemyAttack(e, dt); return; }
   const slowed = e.slow > 0 ? .48 : 1;
