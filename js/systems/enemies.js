@@ -130,11 +130,11 @@ function enemyAttack(e, dt) {
       S.effects.push({ type: 'burst', x: tower.x, y: tower.y, age: 0, life: .7, color: '#ff795f', radius: 44 });
     }
     e.attackClock = e.boss ? .45 : e.type === 'saboteur' ? .95 : .75;
-  } else if (e.type === 'ranged') {
+  } else if (e.type === 'ranged' || e.type === 'gunner') {
     const heroes = [S.hero, S.hero2].filter(h => h && h.hp > 0);
     const target = nearest(S.towers.filter(t => !t.destroyed), e, 580) || nearest(heroes, e, 580) || heroes[0] || S.hero;
-    S.enemyShots.push({ x: e.x, y: e.y, target, speed: 250, damage: e.damage * .62, radius: 6, color: '#d980d9', age: 0, life: 3 });
-    e.attackClock = 2.5;
+    S.enemyShots.push({ x: e.x, y: e.y, target, speed: e.type === 'gunner' ? 330 : 250, damage: e.damage * (e.type === 'gunner' ? .72 : .62), radius: e.type === 'gunner' ? 7 : 6, color: e.type === 'gunner' ? '#ff6b7e' : '#d980d9', age: 0, life: 3, telegraph: .18 });
+    e.attackClock = e.type === 'gunner' ? 1.55 : 2.5;
   } else if (e.type === 'healer') {
     const ally = nearest(S.enemies.filter(other => other !== e && !other.dead && other.hp < other.maxHp * .85), e, 220);
     if (ally) { ally.hp = Math.min(ally.maxHp, ally.hp + 90); S.effects.push({ type: 'heal', x: ally.x, y: ally.y, age: 0, life: .45, color: '#83d17e', radius: 35 }); }
@@ -178,6 +178,7 @@ export function updateEnemies(dt) {
   S.enemies = S.enemies.filter(e => !e.dead);
   for (const shot of S.enemyShots) {
     shot.age += dt;
+    if (shot.telegraph > 0) { shot.telegraph -= dt; continue; }
     if (shot.target?.destroyed || shot.target?.hp <= 0) shot.target = nearest([S.hero, S.hero2].filter(h => h && h.hp > 0), shot, Infinity) || S.hero;
     const target = shot.target || S.hero, dx = target.x - shot.x, dy = target.y - shot.y, d = Math.hypot(dx, dy) || 1;
     shot.x += dx / d * shot.speed * dt; shot.y += dy / d * shot.speed * dt;

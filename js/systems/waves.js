@@ -24,6 +24,7 @@ export function startWave() {
   const pool = ['swarm'];
   if (S.wave >= 2) pool.push('runner');
   if (S.wave >= 3) pool.push('tank', 'split');
+  if (S.wave >= 2) pool.push('gunner');
   if (S.wave >= 4) pool.push('ranged');
   if (S.wave >= 6) pool.push('healer');
   if (S.wave >= 8) pool.push('shield');
