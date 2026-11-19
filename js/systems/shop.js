@@ -68,18 +68,22 @@ export function renderShop() {
 }
 export function toggleShop(force) {
   if (S.phase !== 'playing' || S.waveActive) return;
-  S.shopOpen = force ?? !S.shopOpen; renderShop();
+  S.shopOpen = force ?? !S.shopOpen;
+  if (S.shopOpen) S.shopMessage = '';
+  renderShop();
 }
 export function bindShop() {
   const wrap = document.querySelector('.battle-wrap'), bar = document.querySelector('.game-topbar'); if (!wrap || !bar) return;
   panel = document.createElement('div'); panel.className = 'shop-overlay'; panel.hidden = true; wrap.appendChild(panel);
-  panel.addEventListener('click', e => {
+  panel.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    e.stopPropagation();
     if (e.target.closest('[data-close]')) { toggleShop(false); return; }
     const reroll = e.target.closest('[data-reroll]');
-    if (reroll && rerollShop()) renderShop();
+    if (reroll) { if (rerollShop()) renderShop(); return; }
     const b = e.target.closest('[data-buy]');
-    if (b && buy(b.dataset.buy)) renderShop();
-    else if (e.target === panel) toggleShop(false);
+    if (b) { if (buy(b.dataset.buy)) renderShop(); return; }
+    if (e.target === panel) toggleShop(false);
   });
   const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'command-toggle shop-btn'; btn.innerHTML = '<span>◆</span> TIENDA <kbd>B</kbd>'; btn.onclick = () => toggleShop(); bar.appendChild(btn);
 }
