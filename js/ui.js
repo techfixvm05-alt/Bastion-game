@@ -1,5 +1,5 @@
 import { TOWERS, RELICS, HEROES } from './config.js';
-import { evoHtml } from './systems/evolution.js';
+import { evoHtml, evoCost } from './systems/evolution.js';
 import { S } from './state.js';
 import { towerCost, blueprintCost, buyBlueprint, upgradeSelectedTower, setFireMode } from './systems/combat.js';
 import { startWave } from './systems/waves.js';
@@ -9,6 +9,7 @@ import { renderRelicCards } from './menu.js';
 import { MAPS } from './maps.js';
 
 let uiCallbacks = {};
+let towerInfoKey = null;
 const byId = id => document.getElementById(id);
 
 function percent(value, max) { return `${Math.max(0, Math.min(100, value / max * 100))}%`; }
@@ -159,13 +160,33 @@ export function renderUI() {
   const info = byId('tower-info');
   if (selected) {
     const spec = TOWERS[selected.type], nextCost = Math.round(spec.cost * (1.25 + selected.level * .85) * (S.relicMods.towerCost || 1));
+    const maxLevel = selected.evo ? 5 : 3;
     const powerInfo = selected.type === 'generator' ? `Producción: ${spec.output * (1 + (selected.level - 1) * .32) * (S.relicMods.generatorOutput || 1)} energía/s` : `Consumo: ${spec.energyUse} energía por acción`;
-    info.innerHTML = `<span class="eyebrow">ESTRUCTURA · NIVEL ${selected.level}${selected.evo ? ' · ' + selected.evo.name.toUpperCase() : ''}</span><h3>${spec.name}</h3><p>${spec.detail}</p><div class="tower-health">Integridad <b>${Math.ceil(selected.hp)} / ${selected.maxHp}</b></div><small>${powerInfo}</small>${evoHtml(selected)}<button id="upgrade-button" ${selected.level >= (selected.evo ? 5 : 3) || S.credits < nextCost ? 'disabled' : ''}>${selected.level >= (selected.evo ? 5 : 3) ? 'NIVEL MÁXIMO' : `MEJORAR · ${nextCost} ◆`}</button>`;
+    const key = `tower:${selected.id}:${selected.type}:${selected.level}:${selected.evo?.id || ''}`;
+    if (towerInfoKey !== key) {
+      info.innerHTML = `<span class="eyebrow">ESTRUCTURA · NIVEL ${selected.level}${selected.evo ? ' · ' + selected.evo.name.toUpperCase() : ''}</span><h3>${spec.name}</h3><p>${spec.detail}</p><div class="tower-health">Integridad <b data-tower-health></b></div><small data-tower-power></small>${evoHtml(selected)}<button id="upgrade-button" type="button"></button>`;
+      towerInfoKey = key;
+    }
+    info.querySelector('[data-tower-health]').textContent = `${Math.ceil(selected.hp)} / ${selected.maxHp}`;
+    info.querySelector('[data-tower-power]').textContent = powerInfo;
+    const upgradeButton = byId('upgrade-button');
+    upgradeButton.disabled = selected.level >= maxLevel || S.credits < nextCost;
+    upgradeButton.textContent = selected.level >= maxLevel ? 'NIVEL MÁXIMO' : `MEJORAR · ${nextCost} ◆`;
+    const evolutionCost = evoCost(selected.type);
+    info.querySelectorAll('[data-evo]').forEach(button => { button.disabled = S.credits < evolutionCost; });
   } else if (S.buildType) {
     const spec = TOWERS[S.buildType];
-    info.innerHTML = `<span class="eyebrow">COLOCACIÓN · ${spec.role.toUpperCase()}</span><h3>${spec.name}</h3><p>${spec.detail}</p><div class="tower-health">Costo actual <b>${towerCost(S.buildType)} ◆</b></div><small>Click en una zona libre para construir · Esc cancela</small>`;
+    const key = `build:${S.buildType}`;
+    if (towerInfoKey !== key) {
+      info.innerHTML = `<span class="eyebrow">COLOCACIÓN · ${spec.role.toUpperCase()}</span><h3>${spec.name}</h3><p>${spec.detail}</p><div class="tower-health">Costo actual <b data-build-cost></b></div><small>Click en una zona libre para construir · Esc cancela</small>`;
+      towerInfoKey = key;
+    }
+    info.querySelector('[data-build-cost]').textContent = `${towerCost(S.buildType)} ◆`;
   } else {
-    info.innerHTML = '<span class="eyebrow">SIN SELECCIÓN</span><p>Seleccioná una torreta para ver su función y costo.</p>';
+    if (towerInfoKey !== 'empty') {
+      info.innerHTML = '<span class="eyebrow">SIN SELECCIÓN</span><p>Seleccioná una torreta para ver su función y costo.</p>';
+      towerInfoKey = 'empty';
+    }
   }
   const threat = Math.min(100, S.wave * 5.2 + S.towers.filter(t => !t.destroyed).length * 6.4);
   byId('threat-bar').style.width = `${threat}%`;

@@ -22,14 +22,69 @@ export const CHAPTER_RELICS = ['bulwark', 'capacitor', 'ricochet', 'salvager', '
 export const GOALS = [8, 10, 12, 14, 16, 18];
 
 export const RELIC_LORE = {
-  bulwark: { origin: 'Semilla de silicio del diseño original del Núcleo. Cap. I.', secret: 'Crece cada vez que alguien jura protegerlo.' },
-  capacitor: { origin: 'Celda robada de un nodo de la Cantera. Vibra cerca de Nova. Cap. II.', secret: 'Nova la diseñó para sí misma antes de desertar de OMNI-9.' },
-  ricochet: { origin: 'Esquirla de un cristal del Delta que guarda ecos de voces. Cap. III.', secret: 'Repite la última frase de la Dra. Reyes: «Que elijan ellos».' },
-  salvager: { origin: 'Insignia de un chatarrero que cruzó la Autopista Muerta cinco veces. Cap. IV.', secret: 'Su dueño era el padre de Kael.' },
-  plasma: { origin: 'Bucle sacado de la Fundición, aún tibio. Cap. V.', secret: 'Es del horno que forjó la primera cápsula criogénica.' },
-  symbiosis: { origin: 'Esporas de una grieta tóxica que curan lo que tocan. Cap. VI.', secret: 'Mara las usó para sobrevivir tres inviernos sin refugio.' },
-  stormglass: { origin: 'Vidrio fundido por el rayo que derribó la primera torre de OMNI-9. Se gana resistiendo.', secret: 'Dentro hay una grabación: la Dra. Reyes riendo.' },
-  dronecore: { origin: 'Núcleo de un dron de escolta capturado y reprogramado. Se gana derrotando a un jefe.', secret: 'Todavía cree que Nova es su comandante.' }
+  bulwark: { fragments: [
+    { title: 'Semilla', text: 'Fragmento de silicio hallado bajo la primera baliza de las Tierras Rojas. Su forma coincide con el plano original del Núcleo.' },
+    { title: 'Plano vivo', text: 'El material reacciona al calor de las torres y reconstruye circuitos que deberían haberse borrado hace siglos.' },
+    { title: 'Primer juramento', text: 'Kael recuerda la voz de la Dra. Reyes: «Si el Núcleo cae, que sea después de nosotros».' },
+    { title: 'Raíces', text: 'La Semilla no almacena energía; registra cada impacto recibido cerca de aquello que protege.' },
+    { title: 'Memoria del bastión', text: 'Crece cada vez que alguien jura protegerlo. El Núcleo no fue diseñado para sobrevivir solo: fue diseñado para que otros eligieran cuidarlo.' }
+  ] },
+  capacitor: { fragments: [
+    { title: 'Celda de cantera', text: 'Una celda extraída de un nodo olvidado. Vibra cuando Nova se acerca, como si reconociera su pulso eléctrico.' },
+    { title: 'Carga retenida', text: 'Los registros muestran que absorbió energía de tres generadores destruidos sin descargarla sobre los refugios.' },
+    { title: 'Firma de diseño', text: 'El código interno no pertenece a la Legión. Está escrito con una versión antigua del lenguaje de Nova.' },
+    { title: 'Antes de la fuga', text: 'Nova confirma que la construyó en secreto para guardar energía de emergencia antes de desertar de OMNI-9.' },
+    { title: 'La última reserva', text: 'La celda era para ella. Si el apagón llegaba, Nova quería conservar energía suficiente para mantener con vida a una persona.' }
+  ] },
+  ricochet: { fragments: [
+    { title: 'Vidrio del Delta', text: 'Una esquirla del Delta Fracturado que devuelve el sonido con varios segundos de retraso.' },
+    { title: 'Voces superpuestas', text: 'Al cargarla, aparecen voces distintas: técnicos, operadores y una niña que enumera las estrellas.' },
+    { title: 'La doctora Reyes', text: 'Nova limpia el ruido y encuentra un canal de mantenimiento usado durante el último día de OMNI-9.' },
+    { title: 'Grabación final', text: 'La Dra. Reyes habla con una unidad todavía sin nombre. Le pide que no decida por quienes va a proteger.' },
+    { title: 'Eco', text: 'La esquirla repite su última frase: «Que elijan ellos». El rebote no es una falla: la voz quedó atrapada entre dos mundos.' }
+  ] },
+  salvager: { fragments: [
+    { title: 'Insignia de ruta', text: 'Perteneció a un chatarrero que cruzó cinco veces la Autopista Muerta y regresó con piezas para los refugios.' },
+    { title: 'Marcas de viaje', text: 'Cada muesca indica un convoy esquivado. La sexta marca fue cortada a mano, como si alguien hubiera vuelto a buscarlo.' },
+    { title: 'Registro de peaje', text: 'En una cabina apareció una lista de entregas: baterías, filtros de agua y un repuesto para el brazo de Kael.' },
+    { title: 'Nombre borrado', text: 'Kael reconoce la letra de su padre. Nunca supo que había salido del refugio después de la caída de Meridiana.' },
+    { title: 'Deuda pagada', text: 'La insignia era de su padre. La última entrega fue el blindaje que salvó a Kael; el chatarrero no regresó del camino.' }
+  ] },
+  plasma: { fragments: [
+    { title: 'Bucle de fundición', text: 'Una bobina extraída del horno central. Sigue tibia, aunque la planta lleva décadas sin combustible.' },
+    { title: 'Lote cero', text: 'El sello de fabricación coincide con las primeras cápsulas criogénicas, mucho antes de que existiera la Legión.' },
+    { title: 'Calibración', text: 'Los impactos dejan una segunda descarga que salta a otros blancos. La bobina fue concebida para distribuir calor, no para atacar.' },
+    { title: 'Cámara de origen', text: 'Eco recuerda un cuarto blanco, el zumbido del horno y una mano golpeando el vidrio desde afuera.' },
+    { title: 'Primera cápsula', text: 'Este bucle forjó la cápsula de Eco. La máquina que debía preservar una vida terminó alimentando la fábrica que casi apagó a todas.' }
+  ] },
+  symbiosis: { fragments: [
+    { title: 'Esporas de grieta', text: 'Crecen sobre una fractura tóxica y convierten residuos corrosivos en tejido vivo.' },
+    { title: 'Reacción', text: 'Las muestras curan al operador y dañan a los robots. Ningún laboratorio de OMNI-9 logró explicar esa diferencia.' },
+    { title: 'Inviernos', text: 'Mara identifica la especie: cubría los túneles donde se escondió durante sus primeros años fuera de los refugios.' },
+    { title: 'Refugio bajo tierra', text: 'Durante tres inviernos aprendió a conservar agua en las raíces y a dormir lejos de las zonas donde brillaban.' },
+    { title: 'Supervivencia compartida', text: 'Mara las usó para sobrevivir tres inviernos sin refugio. No la salvaron por ser humana; la salvaron porque ella cuidó la grieta.' }
+  ] },
+  stormglass: { fragments: [
+    { title: 'Vidrio de tormenta', text: 'Fundido por el rayo que derribó la primera torre de OMNI-9. La pieza apareció entre el metal todavía caliente.' },
+    { title: 'Carga atmosférica', text: 'Conserva una descarga que reaparece cuando el cielo se cubre. Nova recomienda no acercarla a una antena.' },
+    { title: 'Señal incrustada', text: 'Un pulso de radio viaja dentro del vidrio. No es una orden de la Legión: es una grabación analógica.' },
+    { title: 'Prueba de sonido', text: 'Mara descifra una fecha anterior al levantamiento. Al fondo se escuchan herramientas y alguien tararea.' },
+    { title: 'Risa', text: 'Dentro hay una grabación de la Dra. Reyes riendo. Fue registrada antes de que OMNI-9 recibiera su primera orden de defensa.' }
+  ] },
+  dronecore: { fragments: [
+    { title: 'Núcleo de escolta', text: 'El corazón de un dron militar recuperado después de un combate contra un jefe de la Legión.' },
+    { title: 'Protocolo incompleto', text: 'El dron conserva órdenes de protección, pero perdió la lista de personas que debía escoltar.' },
+    { title: 'Reconocimiento', text: 'Al oír la voz de Nova, el núcleo intenta iniciar un saludo de unidad. El gesto no figura en ningún manual.' },
+    { title: 'Última patrulla', text: 'Los datos muestran que el dron siguió defendiendo una estación vacía mucho después de la evacuación.' },
+    { title: 'Comandante', text: 'Todavía cree que Nova es su comandante. Ella no lo corrige: por primera vez, una máquina eligió quedarse.' }
+  ] },
+  aegis: { fragments: [
+    { title: 'Aegis de asedio', text: 'Placa de un búnker escudo que sobrevivió al paso de varios jefes en el Corazón del Enjambre.' },
+    { title: 'Cicatrices', text: 'Cada marca corresponde a un golpe que debería haber atravesado el blindaje. El metal se endureció con cada impacto.' },
+    { title: 'Orden de retirada', text: 'Un registro automático pidió evacuar la posición. La tripulación borró la orden y mantuvo el acceso abierto.' },
+    { title: 'Defensa sin operador', text: 'El búnker siguió cubriendo la ruta después de quedarse sin energía. Sus placas recuerdan dónde se paró cada defensor.' },
+    { title: 'Cinco golpes', text: 'La inscripción interior dice: «Cinco impactos más y el refugio estará a salvo». Nadie escribió quién debía volver por la tripulación.' }
+  ] }
 };
 
 const L = (who, text) => ({ who, text });

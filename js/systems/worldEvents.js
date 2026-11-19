@@ -61,13 +61,13 @@ export function updateWorldEvents(dt) {
     zone.life -= dt;
     const damage = S.challenge?.mods?.toxicDamage || 1;
     for (const hero of [S.hero, S.hero2]) if (hero?.hp > 0 && dist(hero, zone) < zone.radius) {
-      if (S.relicMods.toxicAffinity) hero.hp = Math.min(hero.maxHp, hero.hp + 8 * dt);
+      if (S.relicMods.toxicAffinity) hero.hp = Math.min(hero.maxHp, hero.hp + 8 * S.relicMods.toxicAffinity * dt);
       else hero.hp -= 8 * damage * dt;
     }
     for (const tower of S.towers) if (!tower.destroyed && dist(tower, zone) < zone.radius) {
       tower.hp -= 5.5 * dt; if (tower.hp <= 0) tower.destroyed = true;
     }
-    for (const enemy of S.enemies) if (!enemy.dead && dist(enemy, zone) < zone.radius) enemy.hp -= 7 * damage * (S.relicMods.toxicAffinity ? 2 : 1) * dt;
+    for (const enemy of S.enemies) if (!enemy.dead && dist(enemy, zone) < zone.radius) enemy.hp -= 7 * damage * (1 + (S.relicMods.toxicAffinity || 0)) * dt;
   }
   S.toxicZones = S.toxicZones.filter(zone => zone.life > 0);
   for (const mark of S.fissureMarks) mark.life -= dt;

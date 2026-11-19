@@ -35,8 +35,8 @@
               <button class="mode-card" type="button" data-mode="daily"><span class="mode-art daily-art"><i></i><i></i></span><b>Desafío diario</b><small id="daily-challenge-title">Regla rotativa</small><em>ROTATIVO</em></button>
             </div><p id="daily-challenge-rule" class="mode-rule" hidden></p></section>
             <div id="coop-config" class="coop-config" hidden><label class="field-label" for="hero2-select">Segundo operador</label><select id="hero2-select" class="select-control"><option value="ranger">Explorador</option><option value="vanguard">Vanguardia</option><option value="engineer">Ingeniera</option><option value="sentinel">Centinela</option></select><small>Jugador 2: flechas + click derecho.</small></div>
-            <section class="setup-section sector-picker"><div class="section-heading"><h3>Sector de combate</h3><span id="unlock-summary">SECTORES 1/3 · RELIQUIAS 0/8</span></div><div id="sector-options" class="sector-option-grid"></div><p id="story-chapter" class="story-chapter"></p></section>
-            <section class="setup-section relic-picker"><div class="section-heading"><div><h3>Reliquia de expedición</h3><small>Las reliquias se ganan jugando; elegí una que ya hayas recuperado.</small></div><span id="relic-progress">00 / 08</span></div><div id="relic-options" class="relic-option-grid"></div><p id="relic-description" class="relic-description" aria-live="polite"></p><div id="relic-upgrade" class="relic-upgrade"></div></section>
+            <section class="setup-section sector-picker"><div class="section-heading"><h3>Sector de combate</h3><span id="unlock-summary">SECTORES 1/6 · RELIQUIAS 0/9</span></div><div id="sector-options" class="sector-option-grid"></div><p id="story-chapter" class="story-chapter"></p></section>
+            <section class="setup-section relic-loadout"><div class="section-heading"><div><h3>Reliquia de expedición</h3><small id="relic-loadout-summary">Sin reliquia equipada.</small></div><span id="relic-progress">00 / 09</span></div><button id="relic-archive-open" class="relic-archive-open" type="button"><span>⌑</span><b>ABRIR ARCHIVO DE RELIQUIAS</b><small>Consultar fragmentos, mejoras y desbloqueos</small><em>↗</em></button></section>
             <div class="launch-row"><div><span class="eyebrow">RECURSOS DE ARRANQUE</span><b><span id="starting-credits">180</span> <small>◆</small></b><span class="launch-hint">Primero invertí en planos y cobertura.</span></div><button id="start-button" class="primary-button">INICIAR DESPLIEGUE <span>↗</span></button></div>
             <details class="advanced-config"><summary>Semilla y récords</summary><div class="advanced-body">
               <label class="field-label" for="seed-input">Código de sector · compartir o repetir mapa</label><div class="seed-controls"><input id="seed-input" class="text-control" type="text" maxlength="40" placeholder="BASTION:0:SEMILLA" /><button id="copy-seed" class="utility-button" type="button">COPIAR</button></div><p id="seed-status" class="microcopy seed-status">La misma semilla genera el mismo terreno.</p>
@@ -50,6 +50,10 @@
           </div>
         </div>
         <div class="menu-footer"><span>BASTIÓN / SECTOR 01</span><span>LOS PLANOS SE COMPRAN EN CAMPO · LAS RELIQUIAS SE GANAN</span></div>
+      </section>
+      <section id="relic-archive-screen" class="screen relic-archive-screen" hidden>
+        <header class="relic-archive-header"><button id="relic-archive-back" class="icon-button" type="button" aria-label="Volver al despliegue">←</button><div><span class="eyebrow">REGISTRO DE CAMPO · OMNI-9</span><h1>Archivo de reliquias</h1></div><span id="relic-archive-progress" class="relic-archive-count">00 / 09 RECUPERADAS</span></header>
+        <div class="relic-archive-layout"><nav id="relic-archive-list" class="relic-archive-list" aria-label="Reliquias recuperadas"></nav><article id="relic-archive-detail" class="relic-archive-detail" aria-live="polite"></article></div>
       </section>
       <section id="game-screen" class="screen game-screen" hidden>
         <div class="game-topbar">

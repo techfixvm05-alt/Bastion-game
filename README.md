@@ -66,4 +66,11 @@ Juego de defensa táctica escrito en JavaScript nativo. Se publica como sitio es
 - **Torretas:** mejoran hasta nivel 3; en nivel 3 evolucionan a una de dos ramas (`js/systems/evolution.js`) y después suben hasta nivel 5.
 - **Campaña:** cada capítulo tiene objetivo de oleadas (`GOALS` en `js/lore.js`). Ganar desbloquea el siguiente sector y entrega una reliquia.
 - **Historia:** diálogos de inicio y cierre, mensajes de radio durante la partida (`STORY` en `js/lore.js`, motor en `js/story.js`). Click/Espacio avanza, Esc salta.
-- **Reliquias:** cada una tiene origen y un secreto que se revela en nivel 3.
+- **Reliquias:** cada una tiene un origen y un secreto registrados en la campaña.
+
+## Novedades (v6)
+
+- **Órdenes:** el panel conserva el botón de mejora de la torreta seleccionada mientras refresca la información, para que el clic no se pierda.
+- **Archivo de reliquias:** pantalla independiente para revisar las piezas recuperadas, equiparlas y mejorarlas. Cada una guarda cinco fragmentos de historia, uno por nivel.
+- **Recuperación más exigente:** los desafíos de oleadas, bajas, generadores, disparos manuales, estructuras, objetivos y jefes ahora piden metas mayores. Las mejoras cuestan 100, 200, 300 y 400 monedas.
+- **Efectos por nivel:** mejorar una reliquia aumenta su ventaja o reduce su penalidad; el Simbionte también intensifica la curación y el daño de las nubes.

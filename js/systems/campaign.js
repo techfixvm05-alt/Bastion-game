@@ -36,7 +36,7 @@ export function unlockWave(index) { return index <= 1 ? 5 : 6 + index; }
 export function unlockHint(index) { return `Completá el capítulo ${index} (resistí ${GOALS[index - 1]} oleadas)`; }
 export function getChapter(index) { return CHAPTERS[index] || CHAPTERS[CHAPTERS.length - 1]; }
 export function getRelicLevel(id) { return readCampaignProgress().relicLevels[id] || 1; }
-export function relicUpgradeCost(level) { return 60 * level; }
+export function relicUpgradeCost(level) { return 100 * level; }
 export function upgradeRelic(id) {
   const progress = readCampaignProgress(), level = progress.relicLevels[id] || 1, cost = relicUpgradeCost(level);
   if (!progress.relics.includes(id) || level >= MAX_RELIC_LEVEL || progress.coins < cost) return false;
@@ -55,6 +55,7 @@ export function scaleRelicMods(mods, level = 1) {
   if ('chainRatio' in out) out.chainRatio += .07 * n;
   if ('manualBounces' in out) out.manualBounces += Math.floor(n / 2);
   if ('droneKills' in out) out.droneKills = Math.max(4, out.droneKills - n);
+  if ('toxicAffinity' in out) out.toxicAffinity += .18 * n;
   return out;
 }
 export function isRelicUnlocked(id) { return readCampaignProgress().relics.includes(id); }
@@ -69,15 +70,15 @@ export function recordCampaignProgress(run) {
   if (run.won) { const r = CHAPTER_RELICS[run.mapIndex]; if (r && !progress.relics.includes(r)) { progress.relics.push(r); run.relicGranted = r; } }
   if (run.challengeId && run.challengeId !== 'none' && run.wave >= 5) progress.challenges.push(run.challengeId);
   const achievements = [
-    ['stormglass', (run.wave || 0) >= 2],
-    ['salvager', (run.kills || 0) >= 35],
-    ['capacitor', (run.generatorsBuilt || 0) >= 2 && (run.wave || 0) >= 3],
-    ['bulwark', (run.wave || 0) >= 6],
-    ['ricochet', (run.manualKills || 0) >= 15],
-    ['dronecore', (run.bossKills || 0) >= 1],
-    ['plasma', (run.towersBuilt || 0) >= 8],
-    ['symbiosis', !!run.objectiveComplete]
-    , ['aegis', (run.bossKills || 0) >= 1]
+    ['stormglass', (run.wave || 0) >= 5],
+    ['salvager', (run.kills || 0) >= 65],
+    ['capacitor', (run.generatorsBuilt || 0) >= 3 && (run.wave || 0) >= 7],
+    ['bulwark', (run.wave || 0) >= 8],
+    ['ricochet', (run.manualKills || 0) >= 25],
+    ['dronecore', (run.bossKills || 0) >= 2],
+    ['plasma', (run.towersBuilt || 0) >= 10],
+    ['symbiosis', !!run.won && !!run.objectiveComplete],
+    ['aegis', (run.bossKills || 0) >= 3]
   ];
   for (const [id, earned] of achievements) if (earned) progress.relics.push(id);
   progress.unlocked = [...new Set(progress.unlocked)].sort();
