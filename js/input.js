@@ -19,6 +19,7 @@ export function bindInput(canvas, callbacks = {}) {
     if (key === ' ' && S.phase === 'playing') callbacks.onWave?.();
     if (key === 'q' && S.phase === 'playing') triggerHeroAbility(S.hero);
     if (key === 'shift' && S.coop && S.phase === 'playing') triggerHeroAbility(S.hero2);
+    if (key === 'r' && S.phase === 'playing') S.manualRechargeClock = 1.0;
     if (key === 'b') toggleShop();
     if (key === 'escape' && S.shopOpen) toggleShop(false);
     if (key === 'escape') { S.buildType = null; S.selectedTower = null; }

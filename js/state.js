@@ -16,7 +16,7 @@ export const S = {
   environment: { phase: 'idle', type: 'clear', label: 'Calma', timer: 14, duration: 0, sequence: 0 }, toxicZones: [], fissureMarks: [],
   objective: null, objectiveClaimed: false,
   seedText: 'bastion', challengeId: 'none', challenge: null, relicKills: 0, supportDrones: [], blueprints: new Set(),
-  runStats: { towersBuilt: 0, generatorsBuilt: 0, manualKills: 0, bossKills: 0 },
+  runStats: { towersBuilt: 0, generatorsBuilt: 0, manualKills: 0, bossKills: 0 }, manualRechargeClock: 0,
   shopOfferIds: [], shopRerolls: 0, shopMessage: '', bossIncoming: null, bossIncomingClock: 0
 };
 
@@ -44,7 +44,7 @@ export function startRun({ mapIndex = 0, modeId = 'solo', heroType = 'vanguard',
   S.toxicZones = []; S.fissureMarks = []; S.objective = JSON.parse(JSON.stringify(S.map.objective)); S.objectiveClaimed = false;
   S.relicKills = 0; S.supportDrones = [];
   S.buffs = { haste: 0, power: 0 }; S.drops = []; S.combo = { n: 0, t: 0 }; S.shopLevels = {}; S.shopOpen = false;
-  S.shopOfferIds = []; S.shopRerolls = 0; S.shopMessage = ''; S.bossIncoming = null; S.bossIncomingClock = 0;
+  S.shopOfferIds = []; S.shopRerolls = 0; S.shopMessage = ''; S.manualRechargeClock = 0; S.bossIncoming = null; S.bossIncomingClock = 0;
   S.won = false; S.goalWave = GOALS[mapIndex] || 8 + mapIndex * 2; S.storyOpen = false; S.storyWave = 0; S.relicGranted = null;
 }
 
