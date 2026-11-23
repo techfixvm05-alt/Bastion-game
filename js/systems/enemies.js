@@ -1,7 +1,10 @@
+import { comboBonus, onKill } from './drops.js';
 import { ENEMIES, CORE, TOWERS, WORLD } from '../config.js';
 import { S, finishRun } from '../state.js';
 import { clamp, dist, nearest, rand } from '../utils.js';
 import { cue } from '../audio.js';
+
+const PROJECTILE_TYPES = new Set(['ranged', 'gunner', 'burst', 'prism', 'nova']);
 
 function sampleRoute(route) {
   const samples = [];
@@ -92,7 +95,8 @@ export function spawnEnemy(type, routeIndex = null, bossData = null) {
 
 export function killEnemy(enemy) {
   if (enemy.dead) return;
-  enemy.dead = true; S.kills++; S.credits += enemy.reward * (S.relicMods.killCredits || 1) * (S.challenge?.mods?.rewardCredits || 1);
+  enemy.dead = true; S.kills++; S.credits += enemy.reward * (S.relicMods.killCredits || 1) * (S.challenge?.mods?.rewardCredits || 1) * (1 + comboBonus());
+  onKill(enemy);
   if (enemy.manualHit) S.runStats.manualKills++;
   if (enemy.boss) S.runStats.bossKills++;
   S.effects.push({ type: 'burst', x: enemy.x, y: enemy.y, age: 0, life: .48, color: enemy.color, radius: enemy.radius * 1.5 });
@@ -115,11 +119,41 @@ export function killEnemy(enemy) {
 
 function enemyAttack(e, dt) {
   if (e.attackClock > 0) return;
+  if (PROJECTILE_TYPES.has(e.type)) {
+    const heroes = [S.hero, S.hero2].filter(h => h && h.hp > 0);
+    const target = nearest(heroes, e, 760);
+    if (target) {
+      const dx = target.x - e.x, dy = target.y - e.y, base = Math.atan2(dy, dx);
+      if (e.type === 'burst') {
+        for (let i = -1; i <= 1; i++) {
+          const angle = base + i * .16;
+          S.enemyShots.push({ x: e.x, y: e.y, vx: Math.cos(angle) * 300, vy: Math.sin(angle) * 300, pattern: 'fixed', target, speed: 300, damage: e.damage * .48, radius: 7, color: '#f59d69', age: 0, life: 3.2, telegraph: .12 });
+        }
+        e.attackClock = 1.8;
+      } else if (e.type === 'prism') {
+        S.enemyShots.push({ x: e.x, y: e.y, target, speed: 165, damage: e.damage * .78, radius: 11, color: '#72d9d1', age: 0, life: 5, pattern: 'orbit', telegraph: .25 });
+        e.attackClock = 2.8;
+      } else if (e.type === 'nova') {
+        for (let i = -2; i <= 2; i++) {
+          const angle = base + i * .22;
+          S.enemyShots.push({ x: e.x, y: e.y, vx: Math.cos(angle) * 220, vy: Math.sin(angle) * 220, pattern: 'fan', target, speed: 220, damage: e.damage * .38, radius: 8, color: '#b78cff', age: 0, life: 3.6, telegraph: .2 });
+        }
+        e.attackClock = 2.2;
+      } else {
+        const speed = e.type === 'gunner' ? 330 : 250;
+        S.enemyShots.push({ x: e.x, y: e.y, vx: Math.cos(base) * speed, vy: Math.sin(base) * speed, target, speed, damage: e.damage * (e.type === 'gunner' ? .72 : .62), radius: e.type === 'gunner' ? 7 : 6, color: e.type === 'gunner' ? '#ff6b7e' : '#d980d9', age: 0, life: 3, pattern: 'fixed', telegraph: .18 });
+        e.attackClock = e.type === 'gunner' ? 1.55 : 2.5;
+      }
+      return;
+    }
+  }
   const liveTowers = S.towers.filter(t => !t.destroyed);
+  const shield = nearest(liveTowers.filter(t => t.type === 'shieldwall'), e, 92);
   const tower = e.type === 'saboteur' ? nearbySabotageTarget(e)
-    : nearest(liveTowers, e, e.boss ? 200 : e.type === 'tank' ? 105 : 62);
+    : shield || nearest(liveTowers, e, e.boss ? 200 : e.type === 'tank' ? 105 : 62);
   if (tower) {
-    tower.hp -= e.damage * dt * (e.boss ? 1.5 : e.type === 'tank' ? 1.9 : e.type === 'saboteur' ? 2.35 : 1);
+    const shieldDamageScale = tower.type === 'shieldwall' ? .72 : (e.boss ? 1.5 : e.type === 'tank' ? 1.9 : e.type === 'saboteur' ? 2.35 : 1);
+    tower.hp -= e.damage * dt * shieldDamageScale;
     tower.hitFlash = .15;
     if (e.type === 'saboteur') S.effects.push({ type: 'jam', x: tower.x, y: tower.y, age: 0, life: .35, color: '#d8cf69', radius: 30 });
     if (tower.hp <= 0) {
@@ -127,11 +161,6 @@ function enemyAttack(e, dt) {
       S.effects.push({ type: 'burst', x: tower.x, y: tower.y, age: 0, life: .7, color: '#ff795f', radius: 44 });
     }
     e.attackClock = e.boss ? .45 : e.type === 'saboteur' ? .95 : .75;
-  } else if (e.type === 'ranged') {
-    const heroes = [S.hero, S.hero2].filter(h => h && h.hp > 0);
-    const target = nearest(S.towers.filter(t => !t.destroyed), e, 580) || nearest(heroes, e, 580) || heroes[0] || S.hero;
-    S.enemyShots.push({ x: e.x, y: e.y, target, speed: 250, damage: e.damage * .62, radius: 6, color: '#d980d9', age: 0, life: 3 });
-    e.attackClock = 2.5;
   } else if (e.type === 'healer') {
     const ally = nearest(S.enemies.filter(other => other !== e && !other.dead && other.hp < other.maxHp * .85), e, 220);
     if (ally) { ally.hp = Math.min(ally.maxHp, ally.hp + 90); S.effects.push({ type: 'heal', x: ally.x, y: ally.y, age: 0, life: .45, color: '#83d17e', radius: 35 }); }
@@ -147,6 +176,16 @@ function enemyAttack(e, dt) {
 
 function moveOnRoute(e, dt) {
   let target = e.route.points[e.routeAt + 1];
+  if (PROJECTILE_TYPES.has(e.type)) {
+    const aimedTarget = nearest([S.hero, S.hero2].filter(hero => hero && hero.hp > 0), e, 760);
+    if (aimedTarget && aimedTarget !== e.attackTarget && e.attackClock <= 0) e.attackClock = .38;
+    e.attackTarget = aimedTarget;
+    if (e.attackTarget && e.attackClock <= 0) enemyAttack(e, dt);
+  } else {
+    e.attackTarget = null;
+  }
+  const shield = nearest(S.towers.filter(t => !t.destroyed && t.type === 'shieldwall'), e, 78);
+  if (shield) { enemyAttack(e, dt); return; }
   if (!target) { enemyAttack(e, dt); return; }
   if (e.type === 'saboteur' && nearbySabotageTarget(e)) { enemyAttack(e, dt); return; }
   const slowed = e.slow > 0 ? .48 : 1;
@@ -173,12 +212,33 @@ export function updateEnemies(dt) {
   S.enemies = S.enemies.filter(e => !e.dead);
   for (const shot of S.enemyShots) {
     shot.age += dt;
+    if (shot.telegraph > 0) { shot.telegraph -= dt; continue; }
+    const shield = nearest(S.towers.filter(t => !t.destroyed && t.type === 'shieldwall'), shot, 70);
+    if (shield) {
+      shield.hp -= shot.damage * 1.35;
+      shield.hitFlash = .18;
+      S.effects.push({ type: 'burst', x: shot.x, y: shot.y, age: 0, life: .28, radius: 18, color: shield.color });
+      shot.dead = true;
+      if (shield.hp <= 0) {
+        shield.destroyed = true;
+        S.effects.push({ type: 'burst', x: shield.x, y: shield.y, age: 0, life: .7, radius: 55, color: '#9bd1f0' });
+      }
+      continue;
+    }
     if (shot.target?.destroyed || shot.target?.hp <= 0) shot.target = nearest([S.hero, S.hero2].filter(h => h && h.hp > 0), shot, Infinity) || S.hero;
     const target = shot.target || S.hero, dx = target.x - shot.x, dy = target.y - shot.y, d = Math.hypot(dx, dy) || 1;
-    shot.x += dx / d * shot.speed * dt; shot.y += dy / d * shot.speed * dt;
+    if (shot.pattern === 'fixed' || shot.pattern === 'fan') {
+      shot.x += (shot.vx || dx / d * shot.speed) * dt;
+      shot.y += (shot.vy || dy / d * shot.speed) * dt;
+    } else if (shot.pattern === 'orbit') {
+      const orbit = Math.sin(shot.age * 5 + shot.life) * 85 * dt;
+      shot.x += dx / d * shot.speed * dt - dy / d * orbit;
+      shot.y += dy / d * shot.speed * dt + dx / d * orbit;
+    } else {
+      shot.x += dx / d * shot.speed * dt; shot.y += dy / d * shot.speed * dt;
+    }
     if (d < shot.speed * dt + (target.radius || 14)) {
-      if (target === S.hero) target.hp -= shot.damage;
-      else target.hp -= shot.damage;
+      target.hp -= shot.damage * (target.type === 'vanguard' && target.abilityActive > 0 ? .35 : 1);
       cue('hit');
       shot.dead = true;
     }

@@ -1,11 +1,15 @@
-import { TOWERS } from './config.js';
+import { TOWERS, RELICS, HEROES } from './config.js';
+import { evoHtml, evoCost } from './systems/evolution.js';
 import { S } from './state.js';
 import { towerCost, blueprintCost, buyBlueprint, upgradeSelectedTower, setFireMode } from './systems/combat.js';
 import { startWave } from './systems/waves.js';
 import { objectiveStatus } from './systems/objectives.js';
-import { getChallenge } from './systems/campaign.js';
+import { getChallenge, getChapter, renderCampaignMenu } from './systems/campaign.js';
+import { renderRelicCards } from './menu.js';
+import { MAPS } from './maps.js';
 
 let uiCallbacks = {};
+let towerInfoKey = null;
 const byId = id => document.getElementById(id);
 
 function percent(value, max) { return `${Math.max(0, Math.min(100, value / max * 100))}%`; }
@@ -28,11 +32,37 @@ export function bindUI(callbacks = {}) {
   });
   byId('wave-button').addEventListener('click', startWave);
   byId('mode-button').addEventListener('click', () => { setFireMode(); renderUI(); });
+  byId('map-toggle').addEventListener('click', () => { S.mapOpen = !S.mapOpen; renderUI(); });
   byId('command-toggle').addEventListener('click', () => {
     const panel = byId('command-panel'), open = !panel.classList.contains('open');
     panel.classList.toggle('open', open); byId('command-toggle').setAttribute('aria-expanded', String(open));
   });
-  byId('back-button').addEventListener('click', () => { S.phase = 'menu'; byId('game-screen').hidden = true; byId('menu-screen').hidden = false; callbacks.onBack?.(); });
+  byId('back-button').addEventListener('click', () => {
+    S.phase = 'menu';
+    byId('game-screen').hidden = true;
+    byId('menu-screen').hidden = false;
+    renderCampaignMenu();
+    renderRelicCards();
+    callbacks.onBack?.();
+  });
+  byId('next-chapter-button').addEventListener('click', () => {
+    if (!S.won) return;
+    const nextIndex = S.mapIndex + 1;
+    renderCampaignMenu();
+    const mapSelect = byId('map-select');
+    const option = mapSelect?.querySelector(`option[value="${nextIndex}"]`);
+    if (!option || option.disabled) return;
+    mapSelect.value = String(nextIndex);
+    byId('start-button').click();
+  });
+  byId('result-menu-button').addEventListener('click', () => {
+    S.phase = 'menu';
+    byId('game-screen').hidden = true;
+    byId('menu-screen').hidden = false;
+    renderCampaignMenu();
+    renderRelicCards();
+    callbacks.onBack?.();
+  });
   byId('tower-info').addEventListener('click', event => {
     if (!event.target.closest('#upgrade-button')) return;
     const result = upgradeSelectedTower(); if (!result.ok) S.banner = result.message; renderUI();
@@ -48,7 +78,18 @@ export function showGame() {
 export function renderUI() {
   if (!S.hero || !S.map) return;
   byId('sector-label').textContent = S.map.name;
-  byId('wave-label').textContent = String(S.wave).padStart(2, '0');
+  byId('map-toggle').setAttribute('aria-expanded', String(S.mapOpen));
+  const mapLabel = S.mapOpen ? 'CERRAR MAPA <kbd>M / ESC</kbd>' : '◈ MAPA <kbd>M</kbd>';
+  if (byId('map-toggle').innerHTML !== mapLabel) byId('map-toggle').innerHTML = mapLabel;
+  byId('map-toggle').title = S.mapOpen ? 'Cerrar vista del mapa (M o Escape)' : 'Abrir vista completa del mapa (M)';
+  document.querySelector('.battle-wrap')?.classList.toggle('map-open', S.mapOpen);
+  byId('mode-button').disabled = S.mapOpen;
+  byId('command-toggle').disabled = S.mapOpen;
+  if (S.mapOpen) {
+    byId('command-panel').classList.remove('open');
+    byId('command-toggle').setAttribute('aria-expanded', 'false');
+  }
+  byId('wave-label').textContent = S.modeId === 'daily' ? String(S.wave) : `${S.wave} / ${S.goalWave}`;
   byId('kills-label').textContent = String(S.kills).padStart(3, '0');
   byId('credits-label').textContent = String(Math.floor(S.credits));
   byId('challenge-label').textContent = S.coop ? 'CO-OP LOCAL' : getChallenge(S.challengeId)?.name || 'FRONTERA';
@@ -66,6 +107,18 @@ export function renderUI() {
   byId('energy-value').textContent = `${Math.floor(S.energy)} / ${Math.floor(S.maxEnergy)}`;
   byId('energy-rate').textContent = `${S.energyGeneration.toFixed(1)} energía / s · ${S.towers.filter(t => !t.destroyed && t.type === 'generator').length} generadores`;
   byId('weather-value').textContent = S.environment.label;
+  const phenomenon = byId('phenomenon-card');
+  if (S.environment.phase !== 'idle') {
+    const cardCopy = S.environment.type === 'storm'
+      ? 'Tormenta de iones: desvía proyectiles dentro del área azul.'
+      : S.environment.type === 'fissure'
+        ? 'Falla tectónica: cambia permanentemente una ruta; abrí paso antes del impacto.'
+        : 'Nube tóxica: daña operadores y estructuras, pero cura y perjudica según reliquias.';
+    phenomenon.hidden = false;
+    phenomenon.innerHTML = `<b>${S.environment.label}</b><span>${cardCopy}</span><small>${S.environment.phase === 'warning' ? 'IMPACTO INMINENTE' : `${Math.ceil(S.environment.timer)} s`}</small>`;
+  } else {
+    phenomenon.hidden = true;
+  }
   const weatherCopy = S.environment.phase === 'active' && S.environment.type === 'storm' ? 'El viento desvía disparos dentro del frente azul.'
     : S.environment.phase === 'warning' ? 'La ruta marcada va a cambiar en segundos.'
     : S.environment.phase === 'active' && S.environment.type === 'toxic' ? 'Las nubes dañan operadores, torretas y enemigos.'
@@ -80,10 +133,21 @@ export function renderUI() {
   const mode = S.fireMode === 'auto' ? 'DISPARO AUTOMÁTICO' : 'DISPARO MANUAL';
   byId('mode-label').textContent = mode;
   byId('mode-button').classList.toggle('manual', S.fireMode === 'manual');
+  const ability = byId('ability-hud');
+  if (ability && S.hero) {
+    const heroCfg = HEROES[S.hero.type];
+    const cd = Math.ceil(S.hero.abilityCooldown || 0);
+    ability.innerHTML = `<b>${heroCfg.abilityKey} · ${heroCfg.ability}</b><span>${heroCfg.abilityDesc}</span><small>${cd ? `RECARGA ${cd}s` : 'LISTA'}</small>`;
+  }
   byId('wave-button').disabled = S.waveActive;
   byId('wave-button').innerHTML = S.waveActive ? 'OLEADA EN CURSO <span>...</span>' : `${S.wave ? 'ACELERAR SIGUIENTE OLEADA' : 'INICIAR OLEADA'} <span>SPACE</span>`;
+  document.querySelectorAll('.shop-btn').forEach(button => {
+    button.disabled = S.waveActive;
+    button.title = S.waveActive ? 'La tienda está bloqueada durante la oleada' : 'Abrir tienda (B)';
+  });
   document.querySelectorAll('.tower-option').forEach(button => {
     const type = button.dataset.tower;
+    button.title = `${TOWERS[type].name}: ${TOWERS[type].detail}`;
     button.classList.toggle('active', S.buildType === type);
     button.querySelector('.tower-cost').innerHTML = `${towerCost(type)} <small>◆</small>`;
     const plan = button.querySelector('.blueprint-button'), owned = S.blueprints.has(type), cost = blueprintCost(type);
@@ -96,18 +160,42 @@ export function renderUI() {
   const info = byId('tower-info');
   if (selected) {
     const spec = TOWERS[selected.type], nextCost = Math.round(spec.cost * (1.25 + selected.level * .85) * (S.relicMods.towerCost || 1));
+    const maxLevel = selected.evo ? 5 : 3;
     const powerInfo = selected.type === 'generator' ? `Producción: ${spec.output * (1 + (selected.level - 1) * .32) * (S.relicMods.generatorOutput || 1)} energía/s` : `Consumo: ${spec.energyUse} energía por acción`;
-    info.innerHTML = `<span class="eyebrow">ESTRUCTURA · NIVEL ${selected.level}</span><h3>${spec.name}</h3><p>${spec.detail}</p><div class="tower-health">Integridad <b>${Math.ceil(selected.hp)} / ${selected.maxHp}</b></div><small>${powerInfo}</small><button id="upgrade-button" ${selected.level >= 3 || S.credits < nextCost ? 'disabled' : ''}>${selected.level >= 3 ? 'NIVEL MÁXIMO' : `MEJORAR · ${nextCost} ◆`}</button>`;
+    const key = `tower:${selected.id}:${selected.type}:${selected.level}:${selected.evo?.id || ''}`;
+    if (towerInfoKey !== key) {
+      info.innerHTML = `<span class="eyebrow">ESTRUCTURA · NIVEL ${selected.level}${selected.evo ? ' · ' + selected.evo.name.toUpperCase() : ''}</span><h3>${spec.name}</h3><p>${spec.detail}</p><div class="tower-health">Integridad <b data-tower-health></b></div><small data-tower-power></small>${evoHtml(selected)}<button id="upgrade-button" type="button"></button>`;
+      towerInfoKey = key;
+    }
+    info.querySelector('[data-tower-health]').textContent = `${Math.ceil(selected.hp)} / ${selected.maxHp}`;
+    info.querySelector('[data-tower-power]').textContent = powerInfo;
+    const upgradeButton = byId('upgrade-button');
+    upgradeButton.disabled = selected.level >= maxLevel || S.credits < nextCost;
+    upgradeButton.textContent = selected.level >= maxLevel ? 'NIVEL MÁXIMO' : `MEJORAR · ${nextCost} ◆`;
+    const evolutionCost = evoCost(selected.type);
+    info.querySelectorAll('[data-evo]').forEach(button => { button.disabled = S.credits < evolutionCost; });
   } else if (S.buildType) {
     const spec = TOWERS[S.buildType];
-    info.innerHTML = `<span class="eyebrow">COLOCACIÓN · ${spec.role.toUpperCase()}</span><h3>${spec.name}</h3><p>${spec.detail}</p><div class="tower-health">Costo actual <b>${towerCost(S.buildType)} ◆</b></div><small>Click en una zona libre para construir · Esc cancela</small>`;
+    const key = `build:${S.buildType}`;
+    if (towerInfoKey !== key) {
+      info.innerHTML = `<span class="eyebrow">COLOCACIÓN · ${spec.role.toUpperCase()}</span><h3>${spec.name}</h3><p>${spec.detail}</p><div class="tower-health">Costo actual <b data-build-cost></b></div><small>Click en una zona libre para construir · Esc cancela</small>`;
+      towerInfoKey = key;
+    }
+    info.querySelector('[data-build-cost]').textContent = `${towerCost(S.buildType)} ◆`;
   } else {
-    info.innerHTML = '<span class="eyebrow">SIN SELECCIÓN</span><p>Seleccioná una torreta para ver su función y costo.</p>';
+    if (towerInfoKey !== 'empty') {
+      info.innerHTML = '<span class="eyebrow">SIN SELECCIÓN</span><p>Seleccioná una torreta para ver su función y costo.</p>';
+      towerInfoKey = 'empty';
+    }
   }
   const threat = Math.min(100, S.wave * 5.2 + S.towers.filter(t => !t.destroyed).length * 6.4);
   byId('threat-bar').style.width = `${threat}%`;
   byId('threat-value').textContent = threat < 25 ? 'BAJO' : threat < 55 ? 'ELEVADO' : threat < 82 ? 'SEVERO' : 'CRÍTICO';
-  byId('tip-text').textContent = S.energy < 8 && S.towers.some(t => !t.destroyed && t.type !== 'generator') ? 'Reserva crítica: colocá generadores o las torretas dejarán de disparar.'
+  byId('tip-text').textContent = S.enemies.some(e => !e.dead && e.type === 'ranged') ? 'Aguijón: dispara desde lejos. Usá cobertura y priorizálo con daño rápido.'
+    : S.enemies.some(e => !e.dead && e.type === 'gunner') ? 'Artillero: dispara ráfagas rápidas a torres y operadores. Atacalo antes de que te acorralen.'
+    : S.enemies.some(e => !e.dead && e.type === 'healer') ? 'Nódulo: cura aliados cercanos. Priorizalo antes que cure al grupo.'
+    : S.enemies.some(e => !e.dead && e.type === 'shield') ? 'Baluarte: resistente y lento. La perforación y el control lo neutralizan.'
+    : S.energy < 8 && S.towers.some(t => !t.destroyed && t.type !== 'generator') ? 'Reserva crítica: colocá generadores o las torretas dejarán de disparar.'
     : S.routeMutationWave === S.wave && S.wave ? 'Las rutas nuevas siguen activas. Cubrí los flancos.'
     : S.towers.length > 4 ? 'Cada torre sube la presión de los refuerzos y los jefes.' : 'Los jefes registran cada estructura que construís.';
   const notice = byId('wave-notice');
@@ -115,7 +203,11 @@ export function renderUI() {
   if (!notice.hidden) notice.textContent = S.banner;
   if (S.phase === 'over') {
     byId('result-screen').hidden = false;
-    byId('result-title').textContent = S.coreHp <= 0 ? 'NÚCLEO PERDIDO' : 'OPERADOR CAÍDO';
-    byId('result-copy').textContent = `${S.banner || 'La defensa terminó.'} Llegaste a la oleada ${S.wave} y eliminaste ${S.kills} enemigos. La frontera necesita otro intento.`;
+    byId('result-title').textContent = S.won ? 'CAPÍTULO COMPLETADO' : S.coreHp <= 0 ? 'NÚCLEO PERDIDO' : 'OPERADOR CAÍDO';
+    byId('result-copy').textContent = S.won ? `${getChapter(S.mapIndex).victory} +${S.coinsEarned || 0} monedas.${S.relicGranted ? ' Reliquia recuperada: ' + RELICS[S.relicGranted].name + '.' : ''}` : `${S.banner || 'La defensa terminó.'} Llegaste a la oleada ${S.wave} de ${S.goalWave} y eliminaste ${S.kills} enemigos. +${S.coinsEarned || 0} monedas para mejorar reliquias.`;
+    const nextButton = byId('next-chapter-button');
+    const hasNext = S.won && S.mapIndex + 1 < MAPS.length;
+    nextButton.hidden = !hasNext;
+    byId('retry-button').textContent = S.won ? 'REPETIR CAPÍTULO ↻' : 'VOLVER A DESPLEGAR ↻';
   }
 }

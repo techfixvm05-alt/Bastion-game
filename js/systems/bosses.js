@@ -7,10 +7,12 @@ import { cue } from '../audio.js';
 
 export function bossForWave(wave) {
   if (wave % 5 !== 0) return null;
-  return ['colossus', 'cartographer', 'matriarch'][(Math.floor(wave / 5) - 1) % 3];
+  const sequence = ['colossus', 'stormcaller', 'matriarch', 'demolisher', 'cartographer', 'oracle'];
+  const bossIndex = Math.floor(wave / 5) - 1;
+  return sequence[bossIndex % sequence.length];
 }
 
-const TOWER_LABELS = { ballista: 'ballestas', mortar: 'morteros', cryo: 'emisores criónicos', totem: 'totems', inferno: 'lanzallamas' };
+const TOWER_LABELS = { ballista: 'ballestas', mortar: 'morteros', cryo: 'emisores criónicos', totem: 'totems', inferno: 'lanzallamas', shieldwall: 'búnkeres escudo', generator: 'generadores' };
 
 function inspectBossCounters(boss, initial = false) {
   const towers = S.towers.filter(t => !t.destroyed);
@@ -50,7 +52,8 @@ export function spawnBoss(kind) {
   const towers = S.towers.filter(t => !t.destroyed).length;
   const challenge = S.challenge?.mods || {};
   const hp = cfg.baseHp * (1 + S.wave * .17 + towers * .15) * (S.coop ? 1.22 : 1) * (challenge.bossHp || 1);
-  const boss = spawnEnemy('boss', null, { ...cfg, hp, bossKind: kind, color: cfg.color, radius: cfg.radius, speed: cfg.speed, damage: cfg.damage * (1 + S.wave * .075 + towers * .055) * (S.coop ? 1.12 : 1) * (challenge.bossDamage || 1), reward: cfg.reward + S.wave * 18 });
+  const incomingRoute = S.bossIncoming ? S.map.routes.find(route => route.points[0].x === S.bossIncoming.x && route.points[0].y === S.bossIncoming.y) : null;
+  const boss = spawnEnemy('boss', incomingRoute ? incomingRoute.id : null, { ...cfg, hp, bossKind: kind, color: cfg.color, radius: cfg.radius, speed: cfg.speed, damage: cfg.damage * (1 + S.wave * .075 + towers * .055) * (S.coop ? 1.12 : 1) * (challenge.bossDamage || 1), reward: cfg.reward + S.wave * 18 });
   if (!boss) return;
   cue('boss');
   boss.maxHp = boss.hp = hp; boss.bossKind = kind; boss.phase = 1; boss.attackClock = 4; boss.specialClock = 5;
@@ -61,6 +64,23 @@ export function spawnBoss(kind) {
 
 function telegraph(boss, radius, duration, kind = 'blast') {
   S.effects.push({ type: 'warning', x: boss.x, y: boss.y, age: 0, life: duration, color: boss.color, radius, warningKind: kind });
+}
+
+function bossShieldHit(tower, boss) {
+  const limit = Math.max(1, Math.floor(S.relicMods.shieldBossHits || 1));
+  tower.bossHitCount = (tower.bossHitCount || 0) + 1;
+  tower.hitFlash = .22;
+  tower.hp = tower.maxHp;
+  if (tower.bossHitCount >= limit) {
+    tower.hp = 0;
+    tower.destroyed = true;
+    S.effects.push({ type: 'burst', x: tower.x, y: tower.y, age: 0, life: .9, radius: 82, color: '#9bd1f0' });
+    S.banner = `ESCUDO ROTO · ${tower.bossHitCount}/${limit} GOLPES`;
+  } else {
+    S.banner = `ESCUDO · ${tower.bossHitCount}/${limit} GOLPES ABSORBIDOS`;
+  }
+  S.bannerClock = 2.2;
+  if (limit > 1) tower.shieldHits = tower.bossHitCount;
 }
 
 function colossus(boss, dt, pressure) {
@@ -117,12 +137,61 @@ function matriarch(boss, dt, pressure) {
   }
 }
 
+function fireOrb(boss, target, color, speed = 260, damageScale = 1) {
+  if (!target) return;
+  S.enemyShots.push({
+    x: boss.x, y: boss.y, target, speed,
+    damage: boss.damage * .42 * damageScale,
+    radius: 8, color, age: 0, life: 4,
+    orb: true
+  });
+}
+
+function stormcaller(boss, dt, pressure) {
+  boss.specialClock -= dt;
+  if (boss.specialClock <= 0) {
+    boss.specialClock = Math.max(2.8, 6.2 - pressure * .32) * (S.challenge?.mods?.bossCooldown || 1);
+    const operators = [S.hero, S.hero2].filter(hero => hero && hero.hp > 0);
+    const count = boss.phase >= 3 ? 4 : boss.phase === 2 ? 3 : 2;
+    for (let i = 0; i < count; i++) fireOrb(boss, operators[i % Math.max(1, operators.length)] || S.hero, '#79e8ff', 285, 1);
+    S.effects.push({ type: 'burst', x: boss.x, y: boss.y, age: 0, life: .65, radius: 150, color: boss.color });
+  }
+}
+
+function demolisher(boss, dt, pressure) {
+  boss.specialClock -= dt;
+  if (boss.specialClock <= 0) {
+    boss.specialClock = Math.max(3.2, 7 - pressure * .35) * (S.challenge?.mods?.bossCooldown || 1);
+    const targets = [S.hero, S.hero2].filter(hero => hero && hero.hp > 0);
+    for (const target of targets) {
+      telegraph(target, 120, 1.05, 'blast');
+      S.effects.push({ type: 'impact', x: target.x, y: target.y, delay: 1.05, radius: 120, damage: 82 + S.wave * 6, energyDrain: 6, age: 0, life: 1.05, color: boss.color, source: boss });
+    }
+  }
+}
+
+function oracle(boss, dt, pressure) {
+  boss.specialClock -= dt;
+  if (boss.specialClock <= 0) {
+    boss.specialClock = Math.max(2.6, 5.8 - pressure * .28) * (S.challenge?.mods?.bossCooldown || 1);
+    const targets = [S.hero, S.hero2].filter(hero => hero && hero.hp > 0);
+    for (let i = 0; i < boss.phase + 1; i++) {
+      fireOrb(boss, targets[i % Math.max(1, targets.length)] || S.hero, i % 2 ? '#ed697f' : '#ffb0bd', 330 + i * 15, .82);
+    }
+  }
+}
+
 function resolveImpact(effect) {
   if (effect.resolved) return;
   effect.resolved = true;
   if (effect.type !== 'impact') return;
-  if (dist(S.hero, effect) < effect.radius + 14) S.hero.hp -= effect.damage;
-  if (S.hero2 && dist(S.hero2, effect) < effect.radius + 14) S.hero2.hp -= effect.damage;
+  for (const tower of S.towers) {
+    if (!effect.shieldAbsorb && !tower.destroyed && tower.type === 'shieldwall' && dist(tower, effect) < effect.radius + 55) {
+      bossShieldHit(tower, effect.source || bossForWave(S.wave));
+    }
+  }
+  if (dist(S.hero, effect) < effect.radius + 14) S.hero.hp -= effect.damage * (S.hero.type === 'vanguard' && S.hero.abilityActive > 0 ? .35 : 1);
+  if (S.hero2 && dist(S.hero2, effect) < effect.radius + 14) S.hero2.hp -= effect.damage * (S.hero2.type === 'vanguard' && S.hero2.abilityActive > 0 ? .35 : 1);
   if (effect.energyDrain) S.energy = Math.max(0, S.energy - effect.energyDrain * (S.challenge?.mods?.energyDrain || 1));
   for (const tower of S.towers) {
     if (!tower.destroyed && dist(tower, effect) < effect.radius + 22) {
@@ -141,6 +210,16 @@ export function updateBosses(dt) {
   const pressure = S.wave * .13 + towerPressure * .23;
   for (const boss of alive) {
     boss.objectiveCounterClock = Math.max(0, (boss.objectiveCounterClock || 0) - dt);
+    boss.shieldHitClock = Math.max(0, (boss.shieldHitClock || 0) - dt);
+    const shield = S.towers
+      .filter(t => !t.destroyed && t.type === 'shieldwall')
+      .sort((a, b) => dist(a, boss) - dist(b, boss))[0];
+    if (shield && dist(shield, boss) < 145 && boss.shieldHitClock <= 0) {
+      bossShieldHit(shield, boss);
+      boss.shieldHitClock = 1.2;
+      boss.x += (boss.x - shield.x) * .18;
+      boss.y += (boss.y - shield.y) * .18;
+    }
     boss.adaptClock = (boss.adaptClock || 0) - dt;
     if (boss.adaptClock <= 0) { inspectBossCounters(boss); boss.adaptClock = 1.5; }
     const ratio = boss.hp / boss.maxHp;
@@ -148,7 +227,10 @@ export function updateBosses(dt) {
     boss.pulse += dt;
     if (boss.bossKind === 'colossus') colossus(boss, dt, pressure);
     else if (boss.bossKind === 'cartographer') cartographer(boss, dt, pressure);
-    else matriarch(boss, dt, pressure);
+    else if (boss.bossKind === 'matriarch') matriarch(boss, dt, pressure);
+    else if (boss.bossKind === 'stormcaller') stormcaller(boss, dt, pressure);
+    else if (boss.bossKind === 'demolisher') demolisher(boss, dt, pressure);
+    else oracle(boss, dt, pressure);
   }
   for (const effect of S.effects) {
     if (effect.type === 'impact') { effect.delay -= dt; if (effect.delay <= 0) resolveImpact(effect); }
