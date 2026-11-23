@@ -34,7 +34,7 @@ export function saveCurrentRecord() {
     wave: S.wave, kills: S.kills, relic: S.relicId, challengeId: S.challengeId, seedText: S.seedText,
     towersBuilt: S.runStats.towersBuilt, generatorsBuilt: S.runStats.generatorsBuilt,
     manualKills: S.runStats.manualKills, bossKills: S.runStats.bossKills,
-    objectiveComplete: !!S.objective?.complete, won: !!S.won,
+    objectiveComplete: !!S.objective?.complete,
     seconds: Math.max(0, Math.round((performance.now() - S.runStart) / 1000)),
     date: new Date().toLocaleDateString('es-AR')
   };

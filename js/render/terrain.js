@@ -1,37 +1,9 @@
-import { CORE, SEE, WORLD } from '../config.js';
+import { CORE, VIEW, WORLD } from '../config.js';
 import { S } from '../state.js';
 
 function pathStroke(ctx, route, width, color, dash = []) {
   ctx.beginPath(); route.points.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y));
   ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.lineWidth = width; ctx.strokeStyle = color; ctx.setLineDash(dash); ctx.stroke(); ctx.setLineDash([]);
-}
-
-function drawRouteArrows(ctx, route, color) {
-  const spacing = 420, size = 19;
-  let walked = 0, nextArrow = spacing;
-  for (let i = 1; i < route.points.length; i++) {
-    const a = route.points[i - 1], b = route.points[i], dx = b.x - a.x, dy = b.y - a.y;
-    const length = Math.hypot(dx, dy);
-    while (length > 0 && nextArrow <= walked + length) {
-      const t = (nextArrow - walked) / length, x = a.x + dx * t, y = a.y + dy * t;
-      ctx.save(); ctx.translate(x, y); ctx.rotate(Math.atan2(dy, dx));
-      ctx.beginPath(); ctx.moveTo(size, 0); ctx.lineTo(-size * .72, -size * .72); ctx.lineTo(-size * .35, 0); ctx.lineTo(-size * .72, size * .72); ctx.closePath();
-      ctx.fillStyle = color; ctx.globalAlpha = .88; ctx.fill(); ctx.restore();
-      nextArrow += spacing;
-    }
-    walked += length;
-  }
-}
-
-let groundCache = null, groundKey = '';
-function buildGround() {
-  const key = `${S.mapIndex}:${S.map.seed}`; if (groundKey === key && groundCache) return groundCache;
-  const c = document.createElement('canvas'); c.width = WORLD.width; c.height = WORLD.height; const g = c.getContext('2d'); if (!g) return null;
-  let r = 1; for (const ch of key) r = (r * 31 + ch.charCodeAt(0)) >>> 0; const rnd = () => (r = (r * 1664525 + 1013904223) >>> 0) / 4294967296;
-  for (let i = 0; i < 9000; i++) { g.fillStyle = rnd() > .5 ? 'rgba(255,255,255,.035)' : 'rgba(0,0,0,.09)'; g.fillRect(rnd() * WORLD.width, rnd() * WORLD.height, 2 + rnd() * 5, 1 + rnd() * 3); }
-  g.lineWidth = 2; g.strokeStyle = S.map.colors.accent + '26';
-  for (let i = 0; i < 70; i++) { let x = Math.round(rnd() * 35) * 80, y = Math.round(rnd() * 24) * 80; g.beginPath(); g.moveTo(x, y); for (let k = 0; k < 4; k++) { if (rnd() > .5) x += (rnd() > .5 ? 1 : -1) * 80 * (1 + Math.floor(rnd() * 2)); else y += (rnd() > .5 ? 1 : -1) * 80 * (1 + Math.floor(rnd() * 2)); g.lineTo(x, y); } g.stroke(); g.fillStyle = S.map.colors.accent + '55'; g.beginPath(); g.arc(x, y, 4, 0, 7); g.fill(); }
-  groundCache = c; groundKey = key; return c;
 }
 
 export function drawTerrain(ctx) {
@@ -44,7 +16,6 @@ export function drawTerrain(ctx) {
   ctx.strokeStyle = colors.grid; ctx.lineWidth = 1;
   for (let x = 0; x <= WORLD.width; x += 80) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, WORLD.height); ctx.stroke(); }
   for (let y = 0; y <= WORLD.height; y += 80) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(WORLD.width, y); ctx.stroke(); }
-  try { const gc = buildGround(); if (gc) ctx.drawImage(gc, S.camera.x, S.camera.y, SEE.width, SEE.height, S.camera.x, S.camera.y, SEE.width, SEE.height); } catch { /* sin capa extra */ }
   // Basalt plates and mineral seams give each sector a layered ground texture.
   for (let x = 45; x < WORLD.width; x += 190) for (let y = 60; y < WORLD.height; y += 175) {
     const seed = ((x * 13 + y * 7 + S.mapIndex * 31 + seedSalt) % 19) / 19;
@@ -61,33 +32,6 @@ export function drawTerrain(ctx) {
     if (route.bossAdded) { pathStroke(ctx, route, 5, 'rgba(215,131,232,.48)', [13, 12]); pathStroke(ctx, route, 1.5, 'rgba(245,203,255,.75)', [3, 11]); }
     if (route.fissures) { pathStroke(ctx, route, 4, 'rgba(255,146,91,.54)', [5, 14]); }
   }
-  for (const route of S.map.routes) {
-    pathStroke(ctx, route, 74, `${colors.accent}22`); pathStroke(ctx, route, 3, `${colors.accent}aa`, [2, 22]);
-    drawRouteArrows(ctx, route, colors.accent);
-  }
-  // Diferencias visuales por capítulo: estas estructuras no bloquean terreno, pero hacen cada sector reconocible.
-  ctx.save();
-  const landmarks = S.mapIndex % 6;
-  for (let i = 0; i < 5; i++) {
-    const angle = i * Math.PI * 2 / 5 + S.mapIndex * .63;
-    const x = CORE.x + Math.cos(angle) * (430 + i * 85);
-    const y = CORE.y + Math.sin(angle) * (330 + i * 70);
-    if (landmarks === 0 || landmarks === 3) {
-      ctx.fillStyle = i % 2 ? '#76624d' : '#a28b67';
-      ctx.beginPath(); ctx.moveTo(x - 24, y + 28); ctx.lineTo(x - 8, y - 55); ctx.lineTo(x + 22, y - 18); ctx.lineTo(x + 34, y + 28); ctx.closePath(); ctx.fill();
-      ctx.strokeStyle = `${colors.accent}88`; ctx.lineWidth = 2; ctx.stroke();
-    } else if (landmarks === 1 || landmarks === 4) {
-      ctx.fillStyle = '#303335'; ctx.fillRect(x - 28, y - 24, 56, 48);
-      ctx.strokeStyle = colors.accent; ctx.lineWidth = 3; ctx.strokeRect(x - 28, y - 24, 56, 48);
-      ctx.fillStyle = '#b1a26f'; ctx.fillRect(x - 18, y - 17, 36, 5);
-      ctx.fillStyle = colors.accent; ctx.fillRect(x - 4, y - 38, 8, 14);
-    } else {
-      ctx.fillStyle = 'rgba(92,181,190,.18)';
-      ctx.beginPath(); ctx.moveTo(x, y - 46); ctx.lineTo(x + 31, y + 18); ctx.lineTo(x + 8, y + 38); ctx.lineTo(x - 28, y + 12); ctx.closePath(); ctx.fill();
-      ctx.strokeStyle = `${colors.accent}cc`; ctx.lineWidth = 2; ctx.stroke();
-    }
-  }
-  ctx.restore();
   for (const [index, [x, y, w, h]] of S.map.obstacles.entries()) {
     const generated = index >= (S.map.patternObstacleStart ?? Infinity), style = S.map.terrainPattern?.style;
     ctx.fillStyle = 'rgba(5,9,12,.38)'; ctx.fillRect(x + 10, y + 14, w, h);
@@ -124,5 +68,5 @@ export function drawTerrain(ctx) {
 }
 
 export function isOnscreen(x, y, pad = 100) {
-  return x > S.camera.x - pad && x < S.camera.x + SEE.width + pad && y > S.camera.y - pad && y < S.camera.y + SEE.height + pad;
+  return x > S.camera.x - pad && x < S.camera.x + VIEW.width + pad && y > S.camera.y - pad && y < S.camera.y + VIEW.height + pad;
 }

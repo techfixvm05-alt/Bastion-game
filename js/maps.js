@@ -58,19 +58,6 @@ export function createMap(index, seedText = 'bastion') {
   const anchor = anchors[hashSeed(`${index}:${seed}:cluster`) % anchors.length];
   const map = { ...source, seed, terrainPattern: pattern, patternObstacleStart: source.obstacles.length, objective: JSON.parse(JSON.stringify(source.objective)), routes: source.routes.map((points, id) => ({ id, points: points.map(p => ({ ...p })), bossAdded: false, fissures: 0 })), obstacles: source.obstacles.map(v => [...v]) };
   const random = seededRandom(hashSeed(`${index}:${seed}:layout-v2`));
-  const routeVariant = hashSeed(`${index}:${seed}:routes`) % 5;
-  for (const route of map.routes) {
-    if (route.points.length < 3) continue;
-    for (let i = route.points.length - 2; i >= 1; i--) {
-      const a = route.points[i - 1], b = route.points[i], c = route.points[i + 1];
-      const dx = b.x - a.x, dy = b.y - a.y, length = Math.hypot(dx, dy) || 1;
-      const nx = -dy / length, ny = dx / length;
-      const side = ((routeVariant + i + index) % 2 === 0 ? -1 : 1);
-      const bend = 55 + ((hashSeed(`${seed}:${index}:${route.id}:${i}`) % 125));
-      const point = { x: Math.round(b.x + nx * bend * side), y: Math.round(b.y + ny * bend * side) };
-      if (point.x > 120 && point.x < WORLD.width - 120 && point.y > 120 && point.y < WORLD.height - 120) route.points.splice(i, 0, point);
-    }
-  }
   let placed = 0;
   for (let attempts = 0; placed < 7 && attempts < 800; attempts++) {
     const candidate = terrainCandidate(pattern, random, anchor);
@@ -104,23 +91,3 @@ export function makeBossRoutes(map, wave) {
   map.routes.push(...result);
   return result;
 }
-
-// Sectores 4-6: variantes espejadas de los originales con bioma y objetivo propios.
-(function addExtraSectors() {
-  const defs = [
-    [0, 'Autopista Muerta', 'ASFALTO FRACTURADO', { ground: '#1f2127', grid: '#383c4a', path: '#5d6275', accent: '#ff4fa3' }, true, false],
-    [1, 'Fundición Hueca', 'FORJA DE LA LEGIÓN', { ground: '#241c1b', grid: '#47342f', path: '#7a5a48', accent: '#ff8a3d' }, false, true],
-    [2, 'Corazón del Enjambre', 'NÚCLEO DE OMNI-9', { ground: '#191a2b', grid: '#2f3157', path: '#4d5390', accent: '#4fd8ff' }, true, true]
-  ];
-  for (const [from, name, biome, colors, fx, fy] of defs) {
-    const m = JSON.parse(JSON.stringify(MAPS[from]));
-    const X = x => fx ? WORLD.width - x : x, Y = y => fy ? WORLD.height - y : y;
-    m.name = name; m.biome = biome; m.colors = colors;
-    m.routes = m.routes.map(r => r.map(p => ({ x: X(p.x), y: Y(p.y) })));
-    m.obstacles = m.obstacles.map(([x, y, w, h]) => [fx ? WORLD.width - x - w : x, fy ? WORLD.height - y - h : y, w, h]);
-    const o = m.objective; if (o.x != null) { o.x = X(o.x); o.y = Y(o.y); }
-    if (o.sites) o.sites = o.sites.map(s => ({ ...s, x: X(s.x), y: Y(s.y) }));
-    o.reward = Math.round((o.reward || 250) * 1.25);
-    MAPS.push(m);
-  }
-})();
